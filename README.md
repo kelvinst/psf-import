@@ -1,21 +1,15 @@
-# yaps-import
+# psf-import
 
-## The Name
+This project is a plugin with another way to import project set files.
 
-Yet Another Project Set Import - the eclipse psf import improved.
+### Why?
 
-## What?
+Cause I wanted to! No, no. Cause that old one from Eclipse don't make me happy enough. The idea is make the import of team project set files more advanced, keeping it easy to configure.
 
-As you can see in the explanation of the name, yes, its another psf importer plugin for Eclipse.
-
-## Why?
-
-Cause I wanted to! No, no. The idea is make the import of team project set files more advanced, keeping it easy to configure.
-
-## How?
+### How?
 
 That is just an Eclipse plugin, no secrets ;D
 
-## Contributors?
+### Contributors?
 
-Only me (@kelvinst) for now, feel welcome to be another one!
+Only me, Kelvin Stinghen, for now, feel welcome to be another one!

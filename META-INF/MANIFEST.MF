@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: psf-import
+Bundle-SymbolicName: psf-import;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.psf.importer.PsfImportPlugin
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.core.resources,
+ org.eclipse.ui,
+ org.eclipse.team.ui;bundle-version="3.7.100"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ActivationPolicy: lazy
