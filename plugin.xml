@@ -8,7 +8,7 @@
             objectClass="org.eclipse.core.resources.IResource"
             id="psf.contribution">
          <menu
-               label="Project Set"
+               label="Project Sets"
                path="additions"
                id="psf.menu">
             <separator
