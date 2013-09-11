@@ -31,5 +31,22 @@
          </action>
       </objectContribution>
    </extension>
+   <extension
+         point="org.eclipse.ui.importWizards">
+      <category
+            id="org.psf.importer.wizards.sampleCategory"
+            name="Sample File Import">
+      </category>
+      <wizard
+            category="org.psf.importer.wizards.sampleCategory"
+            class="org.psf.importer.wizard.ImportProjectSetWizard"
+            icon="icons/sample.gif"
+            id="org.psf.importer.wizards.ImportWizard"
+            name="Import File">
+         <description>
+            Import a file from the local file system into the workspace.
+         </description>
+      </wizard>
+   </extension>
 
 </plugin>
