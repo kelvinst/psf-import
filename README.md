@@ -8,7 +8,7 @@ Cause I wanted to! No, no. Cause that old one from Eclipse don't make me happy e
 
 ### How?
 
-That is just an Eclipse plugin, no secrets ;D
+That is just an Eclipse plugin, no secrets :smiley:
 
 ### Contributors?
 
