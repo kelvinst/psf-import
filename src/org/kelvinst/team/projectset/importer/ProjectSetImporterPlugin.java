@@ -1,4 +1,4 @@
-package org.psf.importer;
+package org.kelvinst.team.projectset.importer;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -7,18 +7,18 @@ import org.osgi.framework.BundleContext;
 /**
  * The activator class controls the plug-in life cycle
  */
-public class PsfImportPlugin extends AbstractUIPlugin {
+public class ProjectSetImporterPlugin extends AbstractUIPlugin {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = "yaps-import"; //$NON-NLS-1$
+	public static final String PLUGIN_ID = "psf-import"; //$NON-NLS-1$
 
 	// The shared instance
-	private static PsfImportPlugin plugin;
+	private static ProjectSetImporterPlugin plugin;
 	
 	/**
 	 * The constructor
 	 */
-	public PsfImportPlugin() {
+	public ProjectSetImporterPlugin() {
 	}
 
 	/*
@@ -44,7 +44,7 @@ public class PsfImportPlugin extends AbstractUIPlugin {
 	 *
 	 * @return the shared instance
 	 */
-	public static PsfImportPlugin getDefault() {
+	public static ProjectSetImporterPlugin getDefault() {
 		return plugin;
 	}
 
