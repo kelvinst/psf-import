@@ -13,3 +13,7 @@ That is just an Eclipse plugin, no secrets ;D
 ### Contributors?
 
 Only me, Kelvin Stinghen, for now, feel welcome to be another one!
+
+### License
+
+The simple [MIT License](LICENSE).
