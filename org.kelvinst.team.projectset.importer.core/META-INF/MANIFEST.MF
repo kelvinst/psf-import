@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: psf-import
-Bundle-SymbolicName: org.kelvinst.team.projectset.importer;singleton:=true
+Bundle-SymbolicName: org.kelvinst.team.projectset.importer.core;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-Activator: org.kelvinst.team.projectset.importer.ProjectSetImporterPlugin
+Bundle-Activator: org.kelvinst.team.projectset.importer.ProjectSetImporterCorePlugin
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.core.resources,

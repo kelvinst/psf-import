@@ -7,18 +7,18 @@ import org.osgi.framework.BundleContext;
 /**
  * The activator class controls the plug-in life cycle
  */
-public class ProjectSetImporterPlugin extends AbstractUIPlugin {
+public class ProjectSetImporterCorePlugin extends AbstractUIPlugin {
 
 	// The plug-in ID
 	public static final String PLUGIN_ID = "psf-import"; //$NON-NLS-1$
 
 	// The shared instance
-	private static ProjectSetImporterPlugin plugin;
+	private static ProjectSetImporterCorePlugin plugin;
 	
 	/**
 	 * The constructor
 	 */
-	public ProjectSetImporterPlugin() {
+	public ProjectSetImporterCorePlugin() {
 	}
 
 	/*
@@ -44,7 +44,7 @@ public class ProjectSetImporterPlugin extends AbstractUIPlugin {
 	 *
 	 * @return the shared instance
 	 */
-	public static ProjectSetImporterPlugin getDefault() {
+	public static ProjectSetImporterCorePlugin getDefault() {
 		return plugin;
 	}
 
