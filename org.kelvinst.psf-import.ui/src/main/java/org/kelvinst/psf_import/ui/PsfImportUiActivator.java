@@ -1,24 +1,23 @@
-package org.kelvinst.team.projectset.importer;
+package org.kelvinst.psf_import.ui;
 
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
 /**
  * The activator class controls the plug-in life cycle
  */
-public class ProjectSetImporterCorePlugin extends AbstractUIPlugin {
+public class PsfImportUiActivator extends AbstractUIPlugin {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = "psf-import"; //$NON-NLS-1$
+	public static final String PLUGIN_ID = "org.kelvinst.psf-import.ui"; //$NON-NLS-1$
 
 	// The shared instance
-	private static ProjectSetImporterCorePlugin plugin;
+	private static PsfImportUiActivator plugin;
 	
 	/**
 	 * The constructor
 	 */
-	public ProjectSetImporterCorePlugin() {
+	public PsfImportUiActivator() {
 	}
 
 	/*
@@ -44,18 +43,8 @@ public class ProjectSetImporterCorePlugin extends AbstractUIPlugin {
 	 *
 	 * @return the shared instance
 	 */
-	public static ProjectSetImporterCorePlugin getDefault() {
+	public static PsfImportUiActivator getDefault() {
 		return plugin;
 	}
 
-	/**
-	 * Returns an image descriptor for the image file at the given
-	 * plug-in relative path
-	 *
-	 * @param path the path
-	 * @return the image descriptor
-	 */
-	public static ImageDescriptor getImageDescriptor(String path) {
-		return imageDescriptorFromPlugin(PLUGIN_ID, path);
-	}
 }

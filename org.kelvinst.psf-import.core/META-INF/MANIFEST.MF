@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: psf-import.core
+Bundle-SymbolicName: org.kelvinst.psf-import.core
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.kelvinst.psf_import.core.PsfImportCorePlugin
+Bundle-Vendor: kelvinst
+Require-Bundle: org.eclipse.core.runtime
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ActivationPolicy: lazy
