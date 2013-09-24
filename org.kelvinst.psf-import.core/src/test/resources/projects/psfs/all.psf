@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<psf version="2.0">
+<provider id="org.eclipse.egit.core.GitProvider">
+<project reference="1.0,https://github.com/kelvinst/psf-import.git,master,org.kelvinst.psf-import.core/src/test/resources/projects/child-project"/>
+<project reference="1.0,https://github.com/kelvinst/psf-import.git,master,org.kelvinst.psf-import.core/src/test/resources/projects/common-project"/>
+<project reference="1.0,https://github.com/kelvinst/psf-import.git,master,org.kelvinst.psf-import.core/src/test/resources/projects/java-child-project"/>
+</provider>
+<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1380042419620_9" label="java-child" name="java-child">
+<item elementID="=java-child-project" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+</workingSets>
+<workingSets editPageId="org.eclipse.ui.resourceWorkingSetPage" id="1379709569464_1" label="common" name="common">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/common-project" type="4"/>
+</workingSets>
+<workingSets editPageId="org.eclipse.ui.resourceWorkingSetPage" id="1379709640818_2" label="child" name="child">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/child-project" type="4"/>
+</workingSets>
+</psf>
