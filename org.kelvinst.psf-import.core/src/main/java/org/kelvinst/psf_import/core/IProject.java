@@ -1,6 +1,5 @@
 package org.kelvinst.psf_import.core;
 
-import java.util.List;
 
 public interface IProject {
 
@@ -9,9 +8,7 @@ public interface IProject {
 	String getScmRepository();
 	
 	String getScmPath();
-
-	ProjectType getType();
 	
-	List<IWorkingSet> getWrokingSets();
+	String getScmTag();
 	
 }
