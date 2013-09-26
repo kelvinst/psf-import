@@ -1,6 +1,16 @@
+# Compiled files #
 *.class
 
-# Package Files #
+# Package files #
 *.jar
 *.war
 *.ear
+
+# Maven files #
+target
+
+# Eclipse IDE files #
+.settings
+.classpath
+.project
+build
