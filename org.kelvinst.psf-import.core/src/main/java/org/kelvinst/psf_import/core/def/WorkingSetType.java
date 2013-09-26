@@ -1,4 +1,4 @@
-package org.kelvinst.psf_import.core;
+package org.kelvinst.psf_import.core.def;
 
 public enum WorkingSetType {
 

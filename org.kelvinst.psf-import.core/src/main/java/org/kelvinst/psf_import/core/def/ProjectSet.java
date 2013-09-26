@@ -1,21 +1,21 @@
-package org.kelvinst.psf_import.core;
+package org.kelvinst.psf_import.core.def;
 
 import java.util.List;
 
 public class ProjectSet implements IProjectSet {
 
-	private List<IProject> projects;
+	private List<IProvider> providers;
 	private List<IWorkingSet> workingSets;
 	
-	public ProjectSet(List<IProject> projects, List<IWorkingSet> workingSets) {
+	public ProjectSet(List<IProvider> providers, List<IWorkingSet> workingSets) {
 		super();
-		this.projects = projects;
+		this.providers = providers;
 		this.workingSets = workingSets;
 	}
 
 	@Override
-	public List<IProject> getProjects() {
-		return projects;
+	public List<IProvider> getProviders() {
+		return providers;
 	}
 
 	@Override

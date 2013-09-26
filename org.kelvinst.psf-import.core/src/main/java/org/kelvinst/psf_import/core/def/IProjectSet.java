@@ -1,10 +1,10 @@
-package org.kelvinst.psf_import.core;
+package org.kelvinst.psf_import.core.def;
 
 import java.util.List;
 
 public interface IProjectSet {
 
-	List<IProject> getProjects();
+	List<IProvider> getProviders();
 	
 	List<IWorkingSet> getWorkingSets();
 	

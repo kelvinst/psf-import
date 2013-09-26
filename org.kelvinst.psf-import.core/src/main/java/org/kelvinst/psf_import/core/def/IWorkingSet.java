@@ -1,4 +1,4 @@
-package org.kelvinst.psf_import.core;
+package org.kelvinst.psf_import.core.def;
 
 import java.util.List;
 
@@ -6,6 +6,6 @@ public interface IWorkingSet {
 
 	WorkingSetType getType();
 	
-	List<IProject> getProjects();
+	List<IWorkingSetItem> getItems();
 	
 }
