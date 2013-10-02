@@ -10,6 +10,7 @@
 target
 
 # Eclipse IDE files #
+bin
 .settings
 .classpath
 .project
