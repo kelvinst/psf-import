@@ -8,3 +8,4 @@ Bundle-Vendor: kelvinst
 Require-Bundle: org.eclipse.core.runtime
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
+Export-Package: org.kelvinst.psf_import.core
