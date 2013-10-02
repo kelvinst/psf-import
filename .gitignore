@@ -8,10 +8,3 @@
 
 # Maven files #
 target
-
-# Eclipse IDE files #
-bin
-.settings
-.classpath
-.project
-build
