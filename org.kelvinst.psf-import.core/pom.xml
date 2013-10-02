@@ -24,4 +24,5 @@
   	<artifactId>org.kelvinst.psf-import</artifactId>
   	<version>0.0.1-SNAPSHOT</version>
   </parent>
+  <packaging>eclipse-plugin</packaging>
 </project>
