@@ -1,14 +1,1 @@
-# Compiled files #
-*.class
-
-# Package files #
-*.jar
-*.war
-*.ear
-
-# Maven files #
-target
-
-# IDE files #
-.classpath
-.project
+/bin
