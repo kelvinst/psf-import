@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.importWizards">
+      <category
+            name="PsfImport"
+            id="org.kelvinst.psfimport.ui.importWizards.sampleCategory">
+      </category>
+      <wizard
+            name="Import Project Set File"
+            icon="icons/sample.gif"
+            category="org.kelvinst.psfimport.ui.importWizards.sampleCategory"
+            class="org.kelvinst.psfimport.ui.importWizards.ProjectSetFileImportWizard"
+            id="org.kelvinst.psfimport.ui.importWizards.ProjectSetFileImportWizard">
+         <description>
+            Import a file from the local file system into the workspace.
+         </description>
+      </wizard>
+   </extension>
+
+</plugin>
