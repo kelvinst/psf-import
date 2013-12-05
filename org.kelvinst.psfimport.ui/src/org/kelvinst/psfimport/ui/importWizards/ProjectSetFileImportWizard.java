@@ -20,10 +20,10 @@ import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.ui.*;
-import org.eclipse.team.internal.ui.wizards.ImportProjectSetOperation;
 import org.eclipse.team.internal.ui.wizards.PsfFilenameStore;
 import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.IWorkbench;
+import org.kelvinst.psfimport.ui.ImportProjectSetOperation;
 import org.xml.sax.SAXException;
 
 public class ProjectSetFileImportWizard extends Wizard implements IImportWizard {
