@@ -19,7 +19,9 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.internal.ui.*;
+import org.eclipse.team.internal.ui.ITeamUIImages;
+import org.eclipse.team.internal.ui.TeamUIMessages;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.team.internal.ui.wizards.PsfFilenameStore;
 import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.IWorkbench;
@@ -31,56 +33,58 @@ public class ProjectSetFileImportWizard extends Wizard implements IImportWizard 
 
 	public ProjectSetFileImportWizard() {
 		setNeedsProgressMonitor(true);
-		setWindowTitle(TeamUIMessages.ProjectSetImportWizard_Project_Set_1); 
+		setWindowTitle(TeamUIMessages.ProjectSetImportWizard_Project_Set_1);
 	}
-	
+
 	public void addPages() {
-		mainPage = new ProjectSetFileImportWizardMainPage("projectSetMainPage", TeamUIMessages.ProjectSetImportWizard_Import_a_Project_Set_3, TeamUIPlugin.getImageDescriptor(ITeamUIImages.IMG_PROJECTSET_IMPORT_BANNER)); //$NON-NLS-1$ 
+		mainPage = new ProjectSetFileImportWizardMainPage(
+				"projectSetMainPage", TeamUIMessages.ProjectSetImportWizard_Import_a_Project_Set_3, TeamUIPlugin.getImageDescriptor(ITeamUIImages.IMG_PROJECTSET_IMPORT_BANNER)); //$NON-NLS-1$ 
 		addPage(mainPage);
 	}
 
 	public boolean performFinish() {
-		final boolean[] result = new boolean[] {false};
+		final boolean[] result = new boolean[] { false };
 		try {
-			ImportProjectSetOperation op;
-			if (mainPage.getInputType() == ProjectSetFileImportWizardMainPage.InputType_URL) {
-				String psfContent = mainPage.getURLContents();
-				if(psfContent==null){
-					return false;
-				}
-				op = new ImportProjectSetOperation(
-						mainPage.isRunInBackgroundOn() ? null : getContainer(),
-						psfContent, mainPage.getUrl(), mainPage.getWorkingSets());
-			} else {
-				op = new ImportProjectSetOperation(
-						mainPage.isRunInBackgroundOn() ? null : getContainer(),
-						mainPage.getFileName(), mainPage.getWorkingSets());
-			}
-			op.run();
+			new ImportProjectSetOperation(mainPage.isRunInBackgroundOn() ? null
+					: getContainer(), mainPage.getFileName(),
+					mainPage.getWorkingSets()).run();
 			result[0] = true;
 		} catch (InterruptedException e) {
 			return true;
 		} catch (InvocationTargetException e) {
 			Throwable target = e.getTargetException();
 			if (target instanceof TeamException) {
-				ErrorDialog.openError(getShell(), null, null, ((TeamException)target).getStatus());
+				ErrorDialog.openError(getShell(), null, null,
+						((TeamException) target).getStatus());
 				return false;
 			}
 			if (target instanceof RuntimeException) {
-				throw (RuntimeException)target;
+				throw (RuntimeException) target;
 			}
 			if (target instanceof Error) {
-				throw (Error)target;
+				throw (Error) target;
 			}
 			if (target instanceof SAXException) {
-			    ErrorDialog.openError(getShell(), null, null, new Status(IStatus.ERROR, TeamUIPlugin.ID, 0, NLS.bind(TeamUIMessages.ProjectSetImportWizard_2, new String[] { target.getMessage() }), target)); 
-			    return false;
+				ErrorDialog.openError(
+						getShell(),
+						null,
+						null,
+						new Status(IStatus.ERROR, TeamUIPlugin.ID, 0, NLS.bind(
+								TeamUIMessages.ProjectSetImportWizard_2,
+								new String[] { target.getMessage() }), target));
+				return false;
 			}
-			ErrorDialog.openError(getShell(), null, null, new Status(IStatus.ERROR, TeamUIPlugin.ID, 0, NLS.bind(TeamUIMessages.ProjectSetImportWizard_3, new String[] { target.getMessage() }), target)); 
+			ErrorDialog.openError(
+					getShell(),
+					null,
+					null,
+					new Status(IStatus.ERROR, TeamUIPlugin.ID, 0, NLS.bind(
+							TeamUIMessages.ProjectSetImportWizard_3,
+							new String[] { target.getMessage() }), target));
 		}
 		return result[0];
 	}
-		
+
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
 		// The code that finds "selection" is broken (it is always empty), so we
 		// must dig for the selection in the workbench.

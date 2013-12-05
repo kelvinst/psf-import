@@ -11,9 +11,6 @@
 package org.kelvinst.psfimport.ui.importWizards;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,10 +21,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import org.eclipse.compare.internal.Utilities;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -36,8 +31,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.dnd.Clipboard;
-import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.FontMetrics;
@@ -48,7 +41,6 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
@@ -56,7 +48,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.team.internal.ui.ProjectSetImporter;
 import org.eclipse.team.internal.ui.wizards.PsfFilenameStore;
-import org.eclipse.team.internal.ui.wizards.PsfUrlStore;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.PlatformUI;
@@ -68,18 +59,6 @@ public class ProjectSetFileImportWizardMainPage extends WizardPage {
 	Combo fileCombo;
 	String file = ""; //$NON-NLS-1$
 	Button browseButton;
-
-	String urlString = ""; //$NON-NLS-1$
-	Combo urlCombo;
-
-	// input type radios
-	private Button fileInputButton;
-	private Button urlInputButton;
-
-	// input type
-	public static final int InputType_file = 0;
-	public static final int InputType_URL = 1;
-	private int inputType = InputType_file;
 
 	private boolean runInBackground = isRunInBackgroundPreferenceOn();
 	// a wizard shouldn't be in an error state until the state has been modified
@@ -101,31 +80,12 @@ public class ProjectSetFileImportWizardMainPage extends WizardPage {
 	private String[] workingSetTypeIds;
 
 	private PsfFilenameStore psfFilenameStore = PsfFilenameStore.getInstance();
-	private PsfUrlStore psfUrlStore = PsfUrlStore.getInstance();
+	private Label lblFile;
 
 	public ProjectSetFileImportWizardMainPage(String pageName, String title,
 			ImageDescriptor titleImage) {
 		super(pageName, title, titleImage);
 		setDescription("Import the team project file.");
-	}
-
-	private void setInputType(int inputTypeSelected) {
-		this.inputType = inputTypeSelected;
-		// reset the message type and give the user fresh chance to input
-		// correct data
-		messageType = NONE;
-		// update controls
-		fileInputButton.setSelection(inputType == InputType_file);
-		fileCombo.setEnabled(inputType == InputType_file);
-		browseButton.setEnabled(inputType == InputType_file);
-		urlInputButton.setSelection(inputType == InputType_URL);
-		urlCombo.setEnabled(inputType == InputType_URL);
-		// validate field
-		if (inputType == InputType_file)
-			updateFileEnablement();
-		if (inputType == InputType_URL)
-			updateUrlEnablement();
-
 	}
 
 	/*
@@ -160,15 +120,10 @@ public class ProjectSetFileImportWizardMainPage extends WizardPage {
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
 		inner.setLayout(layout);
-
-		fileInputButton = new Button(inner, SWT.RADIO);
-		fileInputButton.setText("F&ile");
-		fileInputButton.setEnabled(true);
-		fileInputButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				setInputType(InputType_file);
-			}
-		});
+		
+		lblFile = new Label(inner, SWT.NONE);
+		lblFile.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
+		lblFile.setText("F&ile:");
 
 		fileCombo = new Combo(inner, SWT.DROP_DOWN);
 		GridData comboData = new GridData(GridData.FILL_HORIZONTAL);
@@ -183,40 +138,16 @@ public class ProjectSetFileImportWizardMainPage extends WizardPage {
 		fileCombo.addListener(SWT.Modify, new Listener() {
 			public void handleEvent(Event event) {
 				file = fileCombo.getText();
-				updateFileEnablement();
+				updateFile();
 			}
 		});
 
 		browseButton = new Button(inner, SWT.PUSH);
 		browseButton.setText("B&rowse...");
-
-		urlInputButton = new Button(inner, SWT.RADIO);
-		urlInputButton.setText("&URL");
-		urlInputButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				setInputType(InputType_URL);
-			}
-		});
-
-		urlCombo = new Combo(inner, SWT.DROP_DOWN);
 		GridData comboData1 = new GridData(GridData.FILL_HORIZONTAL);
 		comboData1.verticalAlignment = GridData.CENTER;
 		comboData1.grabExcessVerticalSpace = false;
 		comboData1.widthHint = IDialogConstants.ENTRY_FIELD_WIDTH;
-		urlCombo.setLayoutData(comboData1);
-
-		urlString = psfUrlStore.getSuggestedDefault();
-		urlCombo.setItems(psfUrlStore.getHistory());
-		urlCombo.setText(urlString);
-		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-		gd.horizontalSpan = 2;
-		urlCombo.setLayoutData(gd);
-		urlCombo.addListener(SWT.Modify, new Listener() {
-			public void handleEvent(Event event) {
-				urlString = urlCombo.getText();
-				updateUrlEnablement();
-			}
-		});
 
 		GridData data = new GridData();
 		data.horizontalAlignment = GridData.FILL;
@@ -284,63 +215,10 @@ public class ProjectSetFileImportWizardMainPage extends WizardPage {
 		});
 
 		setControl(composite);
-		setDefaultInputType();
 		Dialog.applyDialogFont(parent);
 	}
 
-	private void setDefaultInputType() {
-		// check for clipboard contents
-		Control c = getControl();
-		if (c != null) {
-			Clipboard clipboard = new Clipboard(c.getDisplay());
-			Object o = clipboard.getContents(TextTransfer.getInstance());
-			clipboard.dispose();
-			if (o instanceof String) {
-				try {
-					URL url = new URL((String) o);
-					if (url != null) {
-						setInputType(InputType_URL);
-						urlCombo.setText((String) o);
-						return;
-					}
-				} catch (MalformedURLException e) {
-					// ignore, it's not and URL
-				}
-			}
-		}
-		setInputType(InputType_file);
-	}
-
-	private void updateUrlEnablement() {
-		boolean complete = false;
-		setMessage(null);
-		setErrorMessage(null);
-
-		if (urlString.length() == 0) {
-			setMessage("Please specify an URL to import.", messageType);
-			complete = false;
-		} else {
-
-			try {
-				new URL(urlString);
-				// the URL is correct, we can clear the error message
-				complete = true;
-			} catch (MalformedURLException e) {
-				messageType = ERROR;
-				setMessage("Malformed URL", messageType);
-				complete = false;
-			}
-		}
-
-		if (complete) {
-			setErrorMessage(null);
-			setDescription("Import the team project file.");
-		}
-
-		setPageComplete(complete);
-	}
-
-	private void updateFileEnablement() {
+	private void updateFile() {
 		boolean complete = false;
 		setMessage(null);
 		setErrorMessage(null);
@@ -385,10 +263,6 @@ public class ProjectSetFileImportWizardMainPage extends WizardPage {
 		return file;
 	}
 
-	public String getUrl() {
-		return urlString;
-	}
-
 	public void setVisible(boolean visible) {
 		super.setVisible(visible);
 		if (visible) {
@@ -416,37 +290,6 @@ public class ProjectSetFileImportWizardMainPage extends WizardPage {
 
 	public boolean isRunInBackgroundOn() {
 		return runInBackground;
-	}
-
-	public int getInputType() {
-		return inputType;
-	}
-
-	public String getURLContents() {
-		try {
-			PsfUrlStore.getInstance().remember(urlString);
-			String urlContent = Utilities.getURLContents(new URL(urlString),
-					getContainer());
-			if (ProjectSetImporter.isValidProjectSetString(urlContent)) {
-				return urlContent;
-			} else {
-				messageType = ERROR;
-				setMessage(
-						"The specified file is not a valid Team Project Set file.",
-						messageType);
-				setPageComplete(false);
-				return null;
-			}
-		} catch (OperationCanceledException e) { // ignore
-		} catch (InterruptedException e) { // ignore
-		} catch (InvocationTargetException e) {
-			messageType = ERROR;
-			setMessage("File from given URL cannot be loaded", messageType);
-			setPageComplete(false);
-		} catch (MalformedURLException e) {
-			// ignore as we tested it with modify listener on combo
-		}
-		return null;
 	}
 
 	/**
