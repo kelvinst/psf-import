@@ -20,23 +20,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.ui.wizards.datatransfer.IImportStructureProvider;
-
 /**
  * This class provides information regarding the structure and
  * content of specified file system File objects.
  * 
  * class copied from org.eclipse.ui.wizards.datatransfer.FileSystemStructureProvider as its singleton
  */
-public class FileSystemStructureProvider implements IImportStructureProvider {
+public class FileStructureProvider {
 
 	private Set<String> visitedDirs;
 
     /* (non-Javadoc)
      * Method declared on IImportStructureProvider
      */
-    public List<File> getChildren(Object element) {
-        File folder = (File) element;
+    public List<File> getChildren(File folder) {
         String[] children = folder.list();
         int childrenLength = children == null ? 0 : children.length;
         List<File> result = new ArrayList<File>(childrenLength);
@@ -83,9 +80,9 @@ public class FileSystemStructureProvider implements IImportStructureProvider {
 	/* (non-Javadoc)
      * Method declared on IImportStructureProvider
      */
-    public InputStream getContents(Object element) {
+    public InputStream getContents(File file) {
         try {
-            return new FileInputStream((File) element);
+            return new FileInputStream(file);
         } catch (FileNotFoundException e) {
         	PsfImportPlugin.error(e.getLocalizedMessage(), e);
             return null;
@@ -102,24 +99,14 @@ public class FileSystemStructureProvider implements IImportStructureProvider {
     /* (non-Javadoc)
      * Method declared on IImportStructureProvider
      */
-    public String getLabel(Object element) {
-
-        //Get the name - if it is empty then return the path as it is a file root
-        File file = (File) element;
-        String name = file.getName();
+    public String getLabel(File file) {
+    	String name = file.getName();
         if (name.length() == 0) {
 			return file.getPath();
 		}
         return name;
     }
 
-    /* (non-Javadoc)
-     * Method declared on IImportStructureProvider
-     */
-    public boolean isFolder(Object element) {
-        return ((File) element).isDirectory();
-    }
-    
     /**
      * Clears the visited dir information
      */

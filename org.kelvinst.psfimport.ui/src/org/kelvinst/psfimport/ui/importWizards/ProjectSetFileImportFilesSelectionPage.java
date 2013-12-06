@@ -81,7 +81,6 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
-import org.eclipse.ui.dialogs.FileSystemElement;
 import org.eclipse.ui.internal.ide.DialogUtil;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
@@ -92,8 +91,8 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.model.WorkbenchViewerComparator;
 import org.eclipse.ui.wizards.datatransfer.IImportStructureProvider;
 import org.eclipse.ui.wizards.datatransfer.ImportOperation;
-import org.kelvinst.psfimport.ui.FileSystemStructureProvider;
-import org.kelvinst.psfimport.ui.MinimizedFileSystemElement;
+import org.kelvinst.psfimport.ui.FileElement;
+import org.kelvinst.psfimport.ui.FileStructureProvider;
 
 /**
  * Page 1 of the base resource import-from-file-system Wizard
@@ -109,7 +108,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	// A boolean to indicate if the user has typed anything
 	private boolean entryChanged = false;
 
-	private FileSystemStructureProvider fileSystemStructureProvider = new FileSystemStructureProvider();
+	private FileStructureProvider fileStructureProvider = new FileStructureProvider();
 
 	// dialog store id constants
 	private final static String STORE_SOURCE_NAMES_ID = "WizardFileSystemResourceImportPage1.STORE_SOURCE_NAMES_ID";//$NON-NLS-1$
@@ -132,7 +131,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * The <code>selectionGroup</code> field should have been created with a
 	 * private modifier. Subclasses should not access this field directly.
 	 */
-	private FileSystemElement root;
+	private FileElement root;
 
 	private Object currentTreeSelection;
 
@@ -1074,7 +1073,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * 
 	 * @param newRoot
 	 */
-	public void setRoot(FileSystemElement newRoot) {
+	public void setRoot(FileElement newRoot) {
 		this.root = newRoot;
 		initialize();
 	}
@@ -1525,7 +1524,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 */
 	protected void createFileSelectionGroup(Composite parent) {
 
-		root = new FileSystemElement("Dummy", null, true);
+		root = new FileElement("Dummy", null, true);
 		this.treeContentProvider = getFolderProvider();
 		this.listContentProvider = getFileProvider();
 		this.treeLabelProvider = new WorkbenchLabelProvider();
@@ -1559,8 +1558,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * @return a list of resources currently selected for export (element type:
 	 *         <code>IResource</code>)
 	 */
-	protected List getSelectedResources() {
-		final ArrayList returnValue = new ArrayList();
+	protected List<FileElement> getSelectedResources() {
+		final ArrayList<FileElement> returnValue = new ArrayList<FileElement>();
 
 		IElementFilter passThroughFilter = new IElementFilter() {
 
@@ -1570,7 +1569,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 			public void filterElements(Object[] elements, IProgressMonitor monitor) {
 				for (int i = 0; i < elements.length; i++) {
-					returnValue.add(elements[i]);
+					returnValue.add((FileElement) elements[i]);
 				}
 			}
 		};
@@ -1583,7 +1582,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 				findAllSelectedListElements(children[i], null, whiteCheckedTreeItems.contains(children[i]), passThroughFilter, null);
 			}
 		} catch (InterruptedException exception) {
-			return new ArrayList();
+			return new ArrayList<FileElement>();
 		}
 
 		return returnValue;
@@ -1817,7 +1816,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		
 		// Update enablements when this is selected
 		updateWidgetEnablements();
-		fileSystemStructureProvider.clearVisitedDirs();
+		fileStructureProvider.clearVisitedDirs();
 		setTreeviewFocus();
 	}
 
@@ -1826,16 +1825,16 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * file system object merits one. The criteria for this are: Also create the
 	 * children.
 	 */
-	protected MinimizedFileSystemElement createRootElement(Object fileSystemObject, IImportStructureProvider provider) {
-		boolean isContainer = provider.isFolder(fileSystemObject);
+	protected FileElement createRootElement(File fileSystemObject, FileStructureProvider provider) {
+		boolean isContainer = fileSystemObject.isDirectory();
 		String elementLabel = provider.getLabel(fileSystemObject);
 
 		// Use an empty label so that display of the element's full name
 		// doesn't include a confusing label
-		MinimizedFileSystemElement dummyParent = new MinimizedFileSystemElement("", null, true);//$NON-NLS-1$
+		FileElement dummyParent = new FileElement("", null, true);//$NON-NLS-1$
 		dummyParent.setPopulated();
-		MinimizedFileSystemElement result = new MinimizedFileSystemElement(elementLabel, dummyParent, isContainer);
-		result.setFileSystemObject(fileSystemObject);
+		FileElement result = new FileElement(elementLabel, dummyParent, isContainer);
+		result.setFile(fileSystemObject);
 
 		// Get the files for the element so as to build the first level
 		result.getFiles(provider);
@@ -1898,9 +1897,9 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	protected ITreeContentProvider getFileProvider() {
 		return new WorkbenchContentProvider() {
 			public Object[] getChildren(Object o) {
-				if (o instanceof MinimizedFileSystemElement) {
-					MinimizedFileSystemElement element = (MinimizedFileSystemElement) o;
-					return element.getFiles(fileSystemStructureProvider).getChildren(element);
+				if (o instanceof FileElement) {
+					FileElement element = (FileElement) o;
+					return element.getFiles(fileStructureProvider).toArray();
 				}
 				return new Object[0];
 			}
@@ -1912,14 +1911,14 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * currently-specified source. If this FileSystemElement is not currently
 	 * defined then create and return it.
 	 */
-	protected MinimizedFileSystemElement getFileSystemTree() {
+	protected FileElement getFileSystemTree() {
 
 		File sourceDirectory = getSourceDirectory();
 		if (sourceDirectory == null) {
 			return null;
 		}
 
-		return selectFiles(sourceDirectory, fileSystemStructureProvider);
+		return selectFiles(sourceDirectory, fileStructureProvider);
 	}
 
 	/**
@@ -1929,21 +1928,20 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	protected ITreeContentProvider getFolderProvider() {
 		return new WorkbenchContentProvider() {
 			public Object[] getChildren(Object o) {
-				if (o instanceof MinimizedFileSystemElement) {
-					MinimizedFileSystemElement element = (MinimizedFileSystemElement) o;
-					return element.getFolders(fileSystemStructureProvider).getChildren(element);
+				if (o instanceof FileElement) {
+					FileElement element = (FileElement) o;
+					return element.getFolders(fileStructureProvider).toArray();
 				}
 				return new Object[0];
 			}
 
 			public boolean hasChildren(Object o) {
-				if (o instanceof MinimizedFileSystemElement) {
-					MinimizedFileSystemElement element = (MinimizedFileSystemElement) o;
+				if (o instanceof FileElement) {
+					FileElement element = (FileElement) o;
 					if (element.isPopulated()) {
 						return getChildren(element).length > 0;
 					}
 
-					// If we have not populated then wait until asked
 					return true;
 				}
 				return false;
@@ -2075,7 +2073,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * Repopulate the view based on the currently entered directory.
 	 */
 	protected void resetSelection() {
-		MinimizedFileSystemElement currentRoot = getFileSystemTree();
+		FileElement currentRoot = getFileSystemTree();
 		setRoot(currentRoot);
 	}
 
@@ -2130,9 +2128,9 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * structure provider. If the user specifies files to be imported then this
 	 * selection is cached for later retrieval and is returned.
 	 */
-	protected MinimizedFileSystemElement selectFiles(final Object rootFileSystemObject, final IImportStructureProvider structureProvider) {
+	protected FileElement selectFiles(final File rootFileSystemObject, final FileStructureProvider structureProvider) {
 
-		final MinimizedFileSystemElement[] results = new MinimizedFileSystemElement[1];
+		final FileElement[] results = new FileElement[1];
 
 		BusyIndicator.showWhile(getShell().getDisplay(), new Runnable() {
 			public void run() {

@@ -24,7 +24,7 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.dialogs.FileSystemElement;
+import org.kelvinst.psfimport.ui.FileElement;
 import org.kelvinst.psfimport.ui.ImportProjectSetOperation;
 import org.kelvinst.psfimport.ui.PsfImportPlugin;
 import org.xml.sax.SAXException;
