@@ -28,6 +28,7 @@ import org.kelvinst.psfimport.ui.ImportProjectSetOperation;
 import org.xml.sax.SAXException;
 
 public class ProjectSetFileImportWizard extends Wizard implements IImportWizard {
+	NewProjectSetFileImportFilesSelectionPage newFilesPage;
 	ProjectSetFileImportFilesSelectionPage filesPage;
 	ProjectSetFileImportWorkingSetsSelectionPage workingSetsPage;
 
@@ -37,11 +38,13 @@ public class ProjectSetFileImportWizard extends Wizard implements IImportWizard 
 	}
 
 	public void addPages() {
-		filesPage = new ProjectSetFileImportFilesSelectionPage("projectSetFilesPage", "Select the files to import"); //$NON-NLS-1$ 
+		newFilesPage = new NewProjectSetFileImportFilesSelectionPage(null);  
+		addPage(newFilesPage);
+		
+		filesPage = new ProjectSetFileImportFilesSelectionPage();  
 		addPage(filesPage);
 
-		workingSetsPage = new ProjectSetFileImportWorkingSetsSelectionPage("projectSetFilesPage", //$NON-NLS-1$
-				"Configure the working sets to apply to the imported projects");
+		workingSetsPage = new ProjectSetFileImportWorkingSetsSelectionPage();
 		addPage(workingSetsPage);
 	}
 
