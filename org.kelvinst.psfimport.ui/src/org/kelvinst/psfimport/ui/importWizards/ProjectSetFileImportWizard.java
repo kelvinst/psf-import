@@ -37,12 +37,10 @@ public class ProjectSetFileImportWizard extends Wizard implements IImportWizard 
 	}
 
 	public void addPages() {
-		filesPage = new ProjectSetFileImportFilesSelectionPage(
-				"projectSetFilesPage", "Select the files to import"); //$NON-NLS-1$ 
+		filesPage = new ProjectSetFileImportFilesSelectionPage("projectSetFilesPage", "Select the files to import"); //$NON-NLS-1$ 
 		addPage(filesPage);
 
-		workingSetsPage = new ProjectSetFileImportWorkingSetsSelectionPage(
-				"projectSetFilesPage", //$NON-NLS-1$
+		workingSetsPage = new ProjectSetFileImportWorkingSetsSelectionPage("projectSetFilesPage", //$NON-NLS-1$
 				"Configure the working sets to apply to the imported projects");
 		addPage(workingSetsPage);
 	}
@@ -50,17 +48,15 @@ public class ProjectSetFileImportWizard extends Wizard implements IImportWizard 
 	public boolean performFinish() {
 		final boolean[] result = new boolean[] { false };
 		try {
-			new ImportProjectSetOperation(
-					filesPage.isRunInBackgroundOn() ? null : getContainer(),
-					filesPage.getFileName(), filesPage.getWorkingSets()).run();
+			new ImportProjectSetOperation(workingSetsPage.isRunInBackgroundOn() ? null : getContainer(), filesPage.getFileName(),
+					workingSetsPage.getWorkingSets()).run();
 			result[0] = true;
 		} catch (InterruptedException e) {
 			return true;
 		} catch (InvocationTargetException e) {
 			Throwable target = e.getTargetException();
 			if (target instanceof TeamException) {
-				ErrorDialog.openError(getShell(), null, null,
-						((TeamException) target).getStatus());
+				ErrorDialog.openError(getShell(), null, null, ((TeamException) target).getStatus());
 				return false;
 			}
 			if (target instanceof RuntimeException) {
@@ -70,35 +66,20 @@ public class ProjectSetFileImportWizard extends Wizard implements IImportWizard 
 				throw (Error) target;
 			}
 			if (target instanceof SAXException) {
-				ErrorDialog
-						.openError(
-								getShell(),
-								null,
-								null,
-								new Status(
-										IStatus.ERROR,
-										TeamUIPlugin.ID,
-										0,
-										NLS.bind(
-												"An error occurred while parsing the project set file: {0}",
-												new String[] { target
-														.getMessage() }),
-										target));
+				ErrorDialog.openError(
+						getShell(),
+						null,
+						null,
+						new Status(IStatus.ERROR, TeamUIPlugin.ID, 0, NLS.bind("An error occurred while parsing the project set file: {0}",
+								new String[] { target.getMessage() }), target));
 				return false;
 			}
-			ErrorDialog
-					.openError(
-							getShell(),
-							null,
-							null,
-							new Status(
-									IStatus.ERROR,
-									TeamUIPlugin.ID,
-									0,
-									NLS.bind(
-											"An error occurred while performing the project set import: {0}",
-											new String[] { target.getMessage() }),
-									target));
+			ErrorDialog.openError(
+					getShell(),
+					null,
+					null,
+					new Status(IStatus.ERROR, TeamUIPlugin.ID, 0, NLS.bind("An error occurred while performing the project set import: {0}",
+							new String[] { target.getMessage() }), target));
 		}
 		return result[0];
 	}
