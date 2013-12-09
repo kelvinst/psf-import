@@ -11,7 +11,6 @@
 package org.kelvinst.psfimport.ui.importWizards;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,20 +19,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SafeRunner;
-import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -73,37 +68,27 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
-import org.eclipse.ui.internal.ide.DialogUtil;
-import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
-import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
-import org.eclipse.ui.internal.ide.dialogs.IElementFilter;
-import org.eclipse.ui.internal.wizards.datatransfer.DataTransferMessages;
-import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.model.WorkbenchViewerComparator;
-import org.eclipse.ui.wizards.datatransfer.IImportStructureProvider;
-import org.eclipse.ui.wizards.datatransfer.ImportOperation;
+import org.kelvinst.psfimport.ui.FileContentProvider;
 import org.kelvinst.psfimport.ui.FileElement;
 import org.kelvinst.psfimport.ui.FileStructureProvider;
+import org.kelvinst.psfimport.ui.FolderContentProvider;
+import org.kelvinst.psfimport.ui.IFileElementFilter;
 
 /**
  * Page 1 of the base resource import-from-file-system Wizard
  */
-public class ProjectSetFileImportFilesSelectionPage extends WizardPage implements Listener {
+public class ProjectSetFileImportFilesSelectionPage extends WizardPage {
 	// widgets
 	protected Combo sourceNameField;
 
 	protected Button sourceBrowseButton;
-
-	protected Button overwriteExistingResourcesCheckbox;
 
 	// A boolean to indicate if the user has typed anything
 	private boolean entryChanged = false;
@@ -112,16 +97,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 	// dialog store id constants
 	private final static String STORE_SOURCE_NAMES_ID = "WizardFileSystemResourceImportPage1.STORE_SOURCE_NAMES_ID";//$NON-NLS-1$
-
-	private final static String STORE_OVERWRITE_EXISTING_RESOURCES_ID = "WizardFileSystemResourceImportPage1.STORE_OVERWRITE_EXISTING_RESOURCES_ID";//$NON-NLS-1$
-
-	private static final String SELECT_SOURCE_TITLE = "Import from directory";
-
-	private static final String SELECT_SOURCE_MESSAGE = "Select a directory to import from.";
-
-	protected static final String SOURCE_EMPTY_MESSAGE = "Source must not be empty.";
-
-	protected static final int SIZING_TEXT_FIELD_WIDTH = 250;
 
 	protected static final int COMBO_HISTORY_LENGTH = 5;
 
@@ -133,21 +108,23 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 */
 	private FileElement root;
 
-	private Object currentTreeSelection;
+	private String actualPath;
+	
+	private FileElement currentTreeSelection;
 
-	private Collection expandedTreeNodes = new HashSet();
+	private Collection<FileElement> expandedTreeElements;
 
-	private Map checkedStateStore = new HashMap(9);
+	private Map<FileElement, List<FileElement>> checkedStateStore = new HashMap<FileElement, List<FileElement>>(9);
 
-	private HashSet whiteCheckedTreeItems = new HashSet();
+	private HashSet<FileElement> whiteCheckedTreeItems = new HashSet<FileElement>();
 
-	private ITreeContentProvider treeContentProvider;
+	private FolderContentProvider foldersContentProvider;
 
-	private IStructuredContentProvider listContentProvider;
+	private FileContentProvider filesContentProvider;
 
-	private ILabelProvider treeLabelProvider;
+	private ILabelProvider folderLabelProvider;
 
-	private ILabelProvider listLabelProvider;
+	private ILabelProvider filesLabelProvider;
 
 	// widgets
 	private CheckboxTreeViewer treeViewer;
@@ -185,15 +162,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	}
 
 	/**
-	 * Clears all of the listeners from the listener list.
-	 */
-	protected synchronized final void clearListeners() {
-		if (listenerList != null) {
-			listenerList.clear();
-		}
-	}
-
-	/**
 	 * Returns the listeners attached to this event manager.
 	 * 
 	 * @return The listeners currently attached; may be empty, but never
@@ -206,49 +174,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		}
 
 		return list.getListeners();
-	}
-
-	/**
-	 * Whether one or more listeners are attached to the manager.
-	 * 
-	 * @return <code>true</code> if listeners are attached to the manager;
-	 *         <code>false</code> otherwise.
-	 */
-	protected final boolean isListenerAttached() {
-		return listenerList != null;
-	}
-
-	/**
-	 * Removes a listener from this manager.
-	 * 
-	 * @param listener
-	 *            The listener to be removed; must not be <code>null</code>.
-	 */
-	protected synchronized final void removeListenerObject(final Object listener) {
-		if (listenerList != null) {
-			listenerList.remove(listener);
-
-			if (listenerList.isEmpty()) {
-				listenerList = null;
-			}
-		}
-	}
-
-	/**
-	 * This method must be called just before this window becomes visible.
-	 */
-	public void aboutToOpen() {
-		determineWhiteCheckedDescendents(root);
-		checkNewTreeElements(treeContentProvider.getElements(root));
-		currentTreeSelection = null;
-
-		// select the first element in the list
-		Object[] elements = treeContentProvider.getElements(root);
-		Object primary = elements.length > 0 ? elements[0] : null;
-		if (primary != null) {
-			treeViewer.setSelection(new StructuredSelection(primary));
-		}
-		treeViewer.getControl().setFocus();
 	}
 
 	/**
@@ -271,7 +196,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 *            java.lang.Object
 	 */
 	protected boolean areAllChildrenWhiteChecked(Object treeElement) {
-		Object[] children = treeContentProvider.getChildren(treeElement);
+		Object[] children = foldersContentProvider.getChildren(treeElement);
 		for (int i = 0; i < children.length; ++i) {
 			if (!whiteCheckedTreeItems.contains(children[i])) {
 				return false;
@@ -289,8 +214,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * @param treeElement
 	 *            java.lang.Object
 	 */
-	protected boolean areAllElementsChecked(Object treeElement) {
-		List checkedElements = (List) checkedStateStore.get(treeElement);
+	protected boolean areAllElementsChecked(FileElement treeElement) {
+		List<FileElement> checkedElements = checkedStateStore.get(treeElement);
 		if (checkedElements == null) {
 			return false;
 		}
@@ -302,9 +227,9 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * Iterate through the passed elements which are being realized for the
 	 * first time and check each one in the tree viewer as appropriate
 	 */
-	protected void checkNewTreeElements(Object[] elements) {
+	protected void checkNewTreeElements(FileElement[] elements) {
 		for (int i = 0; i < elements.length; ++i) {
-			Object currentElement = elements[i];
+			FileElement currentElement = elements[i];
 			boolean checked = checkedStateStore.containsKey(currentElement);
 			treeViewer.setChecked(currentElement, checked);
 			treeViewer.setGrayed(currentElement, checked && !whiteCheckedTreeItems.contains(currentElement));
@@ -324,9 +249,9 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		BusyIndicator.showWhile(treeViewer.getControl().getDisplay(), new Runnable() {
 			public void run() {
 				if (event.getCheckable().equals(treeViewer)) {
-					treeItemChecked(event.getElement(), event.getChecked());
+					treeItemChecked((FileElement) event.getElement(), event.getChecked());
 				} else {
-					listItemChecked(event.getElement(), event.getChecked(), true);
+					listItemChecked((FileElement) event.getElement(), event.getChecked(), true);
 				}
 
 				notifyCheckStateChangeListeners(event);
@@ -341,10 +266,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 *            org.eclipse.swt.widgets.Composite
 	 * @param style
 	 *            the style flags for the new Composite
-	 * @param useHeightHint
-	 *            If true yse the preferredHeight.
 	 */
-	protected void createContents(Composite parent, int style, boolean useHeightHint) {
+	protected void createContents(Composite parent, int style) {
 		// group pane
 		Composite composite = new Composite(parent, style);
 		composite.setFont(parent.getFont());
@@ -356,8 +279,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		composite.setLayout(layout);
 		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-		createTreeViewer(composite, useHeightHint);
-		createListViewer(composite, useHeightHint);
+		createTreeViewer(composite);
+		createListViewer(composite);
 
 		initialize();
 	}
@@ -365,16 +288,14 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	/**
 	 * Create this group's list viewer.
 	 */
-	protected void createListViewer(Composite parent, boolean useHeightHint) {
+	protected void createListViewer(Composite parent) {
 		listViewer = CheckboxTableViewer.newCheckList(parent, SWT.BORDER);
 		GridData data = new GridData(GridData.FILL_BOTH);
-		if (useHeightHint) {
-			data.heightHint = PREFERRED_HEIGHT;
-		}
+		data.heightHint = PREFERRED_HEIGHT;
 		listViewer.getTable().setLayoutData(data);
 		listViewer.getTable().setFont(parent.getFont());
-		listViewer.setContentProvider(listContentProvider);
-		listViewer.setLabelProvider(listLabelProvider);
+		listViewer.setContentProvider(filesContentProvider);
+		listViewer.setLabelProvider(filesLabelProvider);
 		listViewer.addCheckStateListener(new ICheckStateListener() {
 
 			@Override
@@ -387,23 +308,21 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	/**
 	 * Create this group's tree viewer.
 	 */
-	protected void createTreeViewer(Composite parent, boolean useHeightHint) {
+	protected void createTreeViewer(Composite parent) {
 		Tree tree = new Tree(parent, SWT.CHECK | SWT.BORDER);
 		GridData data = new GridData(GridData.FILL_BOTH);
-		if (useHeightHint) {
-			data.heightHint = PREFERRED_HEIGHT;
-		}
+		data.heightHint = PREFERRED_HEIGHT;
 		tree.setLayoutData(data);
 		tree.setFont(parent.getFont());
 
 		treeViewer = new CheckboxTreeViewer(tree);
-		treeViewer.setContentProvider(treeContentProvider);
-		treeViewer.setLabelProvider(treeLabelProvider);
+		treeViewer.setContentProvider(foldersContentProvider);
+		treeViewer.setLabelProvider(folderLabelProvider);
 		treeViewer.addTreeListener(new ITreeViewerListener() {
 
 			@Override
 			public void treeExpanded(TreeExpansionEvent event) {
-				expandTreeElement(event.getElement());
+				expandTreeElement((FileElement) event.getElement());
 			}
 
 			@Override
@@ -423,7 +342,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 			@Override
 			public void selectionChanged(SelectionChangedEvent event) {
 				IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-				Object selectedElement = selection.getFirstElement();
+				FileElement selectedElement = (FileElement) selection.getFirstElement();
 				if (selectedElement == null) {
 					currentTreeSelection = null;
 					listViewer.setInput(currentTreeSelection);
@@ -456,7 +375,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	protected boolean determineShouldBeAtLeastGrayChecked(Object treeElement) {
 		// if any list items associated with treeElement are checked then it
 		// retains its gray-checked status regardless of its children
-		List checked = (List) checkedStateStore.get(treeElement);
+		List<FileElement> checked = checkedStateStore.get(treeElement);
 		if (checked != null && (!checked.isEmpty())) {
 			return true;
 		}
@@ -464,8 +383,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		// if any children of treeElement are still gray-checked then
 		// treeElement
 		// must remain gray-checked as well. Only ask expanded nodes
-		if (expandedTreeNodes.contains(treeElement)) {
-			Object[] children = treeContentProvider.getChildren(treeElement);
+		if (expandedTreeElements.contains(treeElement)) {
+			FileElement[] children = foldersContentProvider.getChildren(treeElement);
 			for (int i = 0; i < children.length; ++i) {
 				if (checkedStateStore.containsKey(children[i])) {
 					return true;
@@ -484,64 +403,35 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * @param treeElement
 	 *            java.lang.Object
 	 */
-	protected boolean determineShouldBeWhiteChecked(Object treeElement) {
+	protected boolean determineShouldBeWhiteChecked(FileElement treeElement) {
 		return areAllChildrenWhiteChecked(treeElement) && areAllElementsChecked(treeElement);
-	}
-
-	/**
-	 * Recursively add appropriate tree elements to the collection of known
-	 * white-checked tree elements.
-	 * 
-	 * @param treeElement
-	 *            java.lang.Object
-	 */
-	protected void determineWhiteCheckedDescendents(Object treeElement) {
-		// always go through all children first since their white-checked
-		// statuses will be needed to determine the white-checked status for
-		// this tree element
-		Object[] children = treeContentProvider.getElements(treeElement);
-		for (int i = 0; i < children.length; ++i) {
-			determineWhiteCheckedDescendents(children[i]);
-		}
-
-		// now determine the white-checked status for this tree element
-		if (determineShouldBeWhiteChecked(treeElement)) {
-			setWhiteChecked(treeElement, true);
-		}
-	}
-
-	/**
-	 * Cause the tree viewer to expand all its items
-	 */
-	public void expandAll() {
-		treeViewer.expandAll();
 	}
 
 	/**
 	 * Expand an element in a tree viewer
 	 */
-	private void expandTreeElement(final Object item) {
+	private void expandTreeElement(final FileElement item) {
 		BusyIndicator.showWhile(treeViewer.getControl().getDisplay(), new Runnable() {
 			public void run() {
 
 				// First see if the children need to be given their checked
 				// state at all. If they've
 				// already been realized then this won't be necessary
-				if (expandedTreeNodes.contains(item)) {
-					checkNewTreeElements(treeContentProvider.getChildren(item));
+				if (expandedTreeElements.contains(item)) {
+					checkNewTreeElements(foldersContentProvider.getChildren(item));
 				} else {
 
-					expandedTreeNodes.add(item);
+					expandedTreeElements.add(item);
 					if (whiteCheckedTreeItems.contains(item)) {
 						// If this is the first expansion and this is a
 						// white checked node then check the children
-						Object[] children = treeContentProvider.getChildren(item);
+						FileElement[] children = foldersContentProvider.getChildren(item);
 						for (int i = 0; i < children.length; ++i) {
 							if (!whiteCheckedTreeItems.contains(children[i])) {
-								Object child = children[i];
+								FileElement child = children[i];
 								setWhiteChecked(child, true);
 								treeViewer.setChecked(child, true);
-								checkedStateStore.put(child, new ArrayList());
+								checkedStateStore.put(child, new ArrayList<FileElement>());
 							}
 						}
 
@@ -568,8 +458,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * @param monitor
 	 *            IProgressMonitor or null that the cancel is polled for
 	 */
-	private void findAllSelectedListElements(Object treeElement, String parentLabel, boolean addAll, IElementFilter filter, IProgressMonitor monitor)
-			throws InterruptedException {
+	private void findAllSelectedListElements(FileElement treeElement, String parentLabel, boolean addAll, IFileElementFilter filter,
+			IProgressMonitor monitor) throws InterruptedException {
 
 		String fullLabel = null;
 		if (monitor != null && monitor.isCanceled()) {
@@ -581,16 +471,16 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		}
 
 		if (addAll) {
-			filter.filterElements(listContentProvider.getElements(treeElement), monitor);
+			filter.filterElements(filesContentProvider.getChildren(treeElement), monitor);
 		} else { // Add what we have stored
 			if (checkedStateStore.containsKey(treeElement)) {
-				filter.filterElements((Collection) checkedStateStore.get(treeElement), monitor);
+				filter.filterElements(checkedStateStore.get(treeElement), monitor);
 			}
 		}
 
-		Object[] treeChildren = treeContentProvider.getChildren(treeElement);
+		FileElement[] treeChildren = foldersContentProvider.getChildren(treeElement);
 		for (int i = 0; i < treeChildren.length; i++) {
-			Object child = treeChildren[i];
+			FileElement child = treeChildren[i];
 			if (addAll) {
 				findAllSelectedListElements(child, fullLabel, true, filter, monitor);
 			} else { // Only continue for those with checked state
@@ -612,108 +502,23 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * @param result
 	 *            java.util.Collection
 	 */
-	private void findAllWhiteCheckedItems(Object treeElement, Collection result) {
+	private void findAllWhiteCheckedItems(FileElement treeElement, Collection<FileElement> result) {
 
 		if (whiteCheckedTreeItems.contains(treeElement)) {
 			result.add(treeElement);
 		} else {
-			Collection listChildren = (Collection) checkedStateStore.get(treeElement);
+			Collection<FileElement> listChildren = checkedStateStore.get(treeElement);
 			// if it is not in the store then it and it's children are not
 			// interesting
 			if (listChildren == null) {
 				return;
 			}
 			result.addAll(listChildren);
-			Object[] children = treeContentProvider.getChildren(treeElement);
+			FileElement[] children = foldersContentProvider.getChildren(treeElement);
 			for (int i = 0; i < children.length; ++i) {
 				findAllWhiteCheckedItems(children[i], result);
 			}
 		}
-	}
-
-	/**
-	 * Returns whether all items in the list are checked. This method is
-	 * required, because this widget will keep items grey checked even though
-	 * all children are selected (see grayUpdateHierarchy()).
-	 * 
-	 * @return true if all items in the list are checked - false if not
-	 */
-	public boolean isEveryItemChecked() {
-		// Iterate through the children of the root as the root is not in
-		// the store
-		Object[] children = treeContentProvider.getChildren(root);
-		for (int i = 0; i < children.length; ++i) {
-			if (!whiteCheckedTreeItems.contains(children[i])) {
-				if (!treeViewer.getGrayed(children[i]))
-					return false;
-				if (!isEveryChildrenChecked(children[i]))
-					return false;
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Verifies of all list items of the tree element are checked, and if all
-	 * children are white checked. If not, verify their children so that if an
-	 * element is not white checked, but all its children are while checked,
-	 * then, all items are considered checked.
-	 * 
-	 * @param treeElement
-	 *            the treeElement which status to verify
-	 * @return true if all items are checked, false otherwise.
-	 */
-	private boolean isEveryChildrenChecked(Object treeElement) {
-		List checked = (List) checkedStateStore.get(treeElement);
-		if (checked != null && (!checked.isEmpty())) {
-			Object[] listItems = listContentProvider.getElements(treeElement);
-			if (listItems.length != checked.size())
-				return false;
-		}
-		Object[] children = treeContentProvider.getChildren(treeElement);
-		for (int i = 0; i < children.length; ++i) {
-			if (!whiteCheckedTreeItems.contains(children[i])) {
-				if (!treeViewer.getGrayed(children[i]))
-					return false;
-				if (!isEveryChildrenChecked(children[i]))
-					return false;
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Returns a flat list of all of the leaf elements.
-	 * 
-	 * @return all of the leaf elements.
-	 */
-	public List getAllListItems() {
-
-		final ArrayList returnValue = new ArrayList();
-
-		IElementFilter passThroughFilter = new IElementFilter() {
-
-			public void filterElements(Collection elements, IProgressMonitor monitor) {
-				returnValue.addAll(elements);
-			}
-
-			public void filterElements(Object[] elements, IProgressMonitor monitor) {
-				for (int i = 0; i < elements.length; i++) {
-					returnValue.add(elements[i]);
-				}
-			}
-		};
-
-		try {
-			Object[] children = treeContentProvider.getChildren(root);
-			for (int i = 0; i < children.length; ++i) {
-				findAllSelectedListElements(children[i], null, true, passThroughFilter, null);
-			}
-		} catch (InterruptedException exception) {
-			return new ArrayList();
-		}
-		return returnValue;
-
 	}
 
 	/**
@@ -723,27 +528,18 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * 
 	 * @return the list of all of the items that are white checked
 	 */
-	public List getAllWhiteCheckedItems() {
+	public List<FileElement> getAllWhiteCheckedItems() {
 
-		List result = new ArrayList();
+		List<FileElement> result = new ArrayList<FileElement>();
 
 		// Iterate through the children of the root as the root is not in
 		// the store
-		Object[] children = treeContentProvider.getChildren(root);
+		FileElement[] children = foldersContentProvider.getChildren(root);
 		for (int i = 0; i < children.length; ++i) {
 			findAllWhiteCheckedItems(children[i], result);
 		}
 
 		return result;
-	}
-
-	/**
-	 * Answer the number of elements that have been checked by the user.
-	 * 
-	 * @return int
-	 */
-	public int getCheckedElementCount() {
-		return checkedStateStore.size();
 	}
 
 	/**
@@ -755,14 +551,14 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 *            - the label of the parent, can be null
 	 * @return String
 	 */
-	protected String getFullLabel(Object treeElement, String parentLabel) {
+	protected String getFullLabel(FileElement treeElement, String parentLabel) {
 		String label = parentLabel;
 		if (parentLabel == null) {
 			label = ""; //$NON-NLS-1$
 		}
 		IPath parentName = new Path(label);
 
-		String elementText = treeLabelProvider.getText(treeElement);
+		String elementText = treeElement.getName();
 		if (elementText == null) {
 			return parentName.toString();
 		}
@@ -778,24 +574,15 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 *            java.lang.Object
 	 */
 	protected int getListItemsSize(Object treeElement) {
-		Object[] elements = listContentProvider.getElements(treeElement);
+		Object[] elements = filesContentProvider.getElements(treeElement);
 		return elements.length;
-	}
-
-	/**
-	 * Get the table the list viewer uses.
-	 * 
-	 * @return org.eclipse.swt.widgets.Table
-	 */
-	public Table getListTable() {
-		return this.listViewer.getTable();
 	}
 
 	/**
 	 * Logically gray-check all ancestors of treeItem by ensuring that they
 	 * appear in the checked table
 	 */
-	protected void grayCheckHierarchy(Object treeElement) {
+	protected void grayCheckHierarchy(FileElement treeElement) {
 
 		// expand the element first to make sure we have populated for it
 		expandTreeElement(treeElement);
@@ -806,8 +593,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 			return; // no need to proceed upwards from here
 		}
 
-		checkedStateStore.put(treeElement, new ArrayList());
-		Object parent = treeContentProvider.getParent(treeElement);
+		checkedStateStore.put(treeElement, new ArrayList<FileElement>());
+		FileElement parent = foldersContentProvider.getParent(treeElement);
 		if (parent != null) {
 			grayCheckHierarchy(parent);
 		}
@@ -828,44 +615,10 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		}
 
 		// proceed up the tree element hierarchy
-		Object parent = treeContentProvider.getParent(treeElement);
+		Object parent = foldersContentProvider.getParent(treeElement);
 		if (parent != null) {
 			grayUpdateHierarchy(parent);
 		}
-	}
-
-	/**
-	 * Set the initial checked state of the passed list element to true.
-	 * 
-	 * @param element
-	 */
-	public void initialCheckListItem(Object element) {
-		Object parent = treeContentProvider.getParent(element);
-		selectAndReveal(parent);
-		// Check the element in the viewer as if it had been manually
-		// checked
-		listViewer.setChecked(element, true);
-		// As this is not done from the UI then set the box for updating
-		// from the selection to false
-		listItemChecked(element, true, false);
-		grayUpdateHierarchy(parent);
-	}
-
-	/**
-	 * Set the initial checked state of the passed element to true, as well as
-	 * to all of its children and associated list elements
-	 * 
-	 * @param element
-	 */
-	public void initialCheckTreeItem(Object element) {
-		treeItemChecked(element, true);
-		selectAndReveal(element);
-	}
-
-	private void selectAndReveal(Object treeElement) {
-		treeViewer.reveal(treeElement);
-		IStructuredSelection selection = new StructuredSelection(treeElement);
-		treeViewer.setSelection(selection);
 	}
 
 	/**
@@ -873,9 +626,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 */
 	protected void initialize() {
 		treeViewer.setInput(root);
-		this.expandedTreeNodes = new ArrayList();
-		this.expandedTreeNodes.add(root);
-
+		this.expandedTreeElements = new ArrayList<FileElement>();
+		this.expandedTreeElements.add(root);
 	}
 
 	/**
@@ -883,11 +635,11 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * changed by the user. Do not try and update the hierarchy if we are
 	 * building the initial list.
 	 */
-	protected void listItemChecked(Object listElement, boolean state, boolean updatingFromSelection) {
-		List checkedListItems = (List) checkedStateStore.get(currentTreeSelection);
+	protected void listItemChecked(FileElement listElement, boolean state, boolean updatingFromSelection) {
+		List<FileElement> checkedListItems = checkedStateStore.get(currentTreeSelection);
 		// If it has not been expanded do so as the selection of list items
 		// will affect gray state
-		if (!expandedTreeNodes.contains(currentTreeSelection)) {
+		if (!expandedTreeElements.contains(currentTreeSelection)) {
 			expandTreeElement(currentTreeSelection);
 		}
 
@@ -897,7 +649,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 				// checked
 				// list items, tree checking may need to be updated
 				grayCheckHierarchy(currentTreeSelection);
-				checkedListItems = (List) checkedStateStore.get(currentTreeSelection);
+				checkedListItems = checkedStateStore.get(currentTreeSelection);
 			}
 			checkedListItems.add(listElement);
 		} else {
@@ -942,12 +694,12 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * @param treeElement
 	 *            java.lang.Object
 	 */
-	protected void populateListViewer(final Object treeElement) {
+	protected void populateListViewer(final FileElement treeElement) {
 		listViewer.setInput(treeElement);
 
 		// If the element is white checked but not expanded we have not set
 		// up all of the children yet
-		if (!(expandedTreeNodes.contains(treeElement)) && whiteCheckedTreeItems.contains(treeElement)) {
+		if (!(expandedTreeElements.contains(treeElement)) && whiteCheckedTreeItems.contains(treeElement)) {
 
 			// Potentially long operation - show a busy cursor
 			BusyIndicator.showWhile(treeViewer.getControl().getDisplay(), new Runnable() {
@@ -958,50 +710,15 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 			});
 
 		} else {
-			List listItemsToCheck = (List) checkedStateStore.get(treeElement);
+			List<FileElement> listItemsToCheck = checkedStateStore.get(treeElement);
 
 			if (listItemsToCheck != null) {
-				Iterator listItemsEnum = listItemsToCheck.iterator();
+				Iterator<FileElement> listItemsEnum = listItemsToCheck.iterator();
 				while (listItemsEnum.hasNext()) {
 					listViewer.setChecked(listItemsEnum.next(), true);
 				}
 			}
 		}
-	}
-
-	/**
-	 * Logically gray-check all ancestors of treeItem by ensuring that they
-	 * appear in the checked table. Add any elements to the selectedNodes so we
-	 * can track that has been done.
-	 */
-	private void primeHierarchyForSelection(Object item, Set selectedNodes) {
-
-		// Only prime it if we haven't visited yet
-		if (selectedNodes.contains(item)) {
-			return;
-		}
-
-		checkedStateStore.put(item, new ArrayList());
-
-		// mark as expanded as we are going to populate it after this
-		expandedTreeNodes.add(item);
-		selectedNodes.add(item);
-
-		Object parent = treeContentProvider.getParent(item);
-		if (parent != null) {
-			primeHierarchyForSelection(parent, selectedNodes);
-		}
-	}
-
-	/**
-	 * Remove the passed listener from self's collection of clients that listen
-	 * for changes to element checked states
-	 * 
-	 * @param listener
-	 *            ICheckStateListener
-	 */
-	public void removeCheckStateListener(ICheckStateListener listener) {
-		removeListenerObject(listener);
 	}
 
 	/**
@@ -1033,10 +750,10 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * @param treeElement
 	 *            the element being updated
 	 */
-	private void setListForWhiteSelection(Object treeElement) {
+	private void setListForWhiteSelection(FileElement treeElement) {
 
-		Object[] listItems = listContentProvider.getElements(treeElement);
-		List listItemsChecked = new ArrayList();
+		FileElement[] listItems = filesContentProvider.getChildren(treeElement);
+		List<FileElement> listItemsChecked = new ArrayList<FileElement>();
 		for (int i = 0; i < listItems.length; ++i) {
 			listItemsChecked.add(listItems[i]);
 		}
@@ -1082,7 +799,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * Set the checked state of the passed tree element appropriately, and do so
 	 * recursively to all of its child tree elements as well
 	 */
-	protected void setTreeChecked(Object treeElement, boolean state) {
+	protected void setTreeChecked(FileElement treeElement, boolean state) {
 
 		if (treeElement.equals(currentTreeSelection)) {
 			listViewer.setAllChecked(state);
@@ -1100,8 +817,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 		// now logically check/uncheck all children as well if it has been
 		// expanded
-		if (expandedTreeNodes.contains(treeElement)) {
-			Object[] children = treeContentProvider.getChildren(treeElement);
+		if (expandedTreeElements.contains(treeElement)) {
+			FileElement[] children = foldersContentProvider.getChildren(treeElement);
 			for (int i = 0; i < children.length; ++i) {
 				setTreeChecked(children[i], state);
 			}
@@ -1140,7 +857,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * @param isWhiteChecked
 	 *            boolean
 	 */
-	protected void setWhiteChecked(Object treeElement, boolean isWhiteChecked) {
+	protected void setWhiteChecked(FileElement treeElement, boolean isWhiteChecked) {
 		if (isWhiteChecked) {
 			if (!whiteCheckedTreeItems.contains(treeElement)) {
 				whiteCheckedTreeItems.add(treeElement);
@@ -1154,12 +871,12 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * Callback that's invoked when the checked status of an item in the tree is
 	 * changed by the user.
 	 */
-	protected void treeItemChecked(Object treeElement, boolean state) {
+	protected void treeItemChecked(FileElement treeElement, boolean state) {
 
 		// recursively adjust all child tree elements appropriately
 		setTreeChecked(treeElement, state);
 
-		Object parent = treeContentProvider.getParent(treeElement);
+		FileElement parent = foldersContentProvider.getParent(treeElement);
 
 		// workspace root is not shown in the tree, so ignore it
 		if (parent == null || parent instanceof IWorkspaceRoot) {
@@ -1185,7 +902,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 			checkedStateStore.remove(treeElement);
 		}
 
-		Object parent = treeContentProvider.getParent(treeElement);
+		Object parent = foldersContentProvider.getParent(treeElement);
 		if (parent != null) {
 			ungrayCheckHierarchy(parent);
 		}
@@ -1194,7 +911,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	/**
 	 * Set the checked state of self and all ancestors appropriately
 	 */
-	protected void updateHierarchy(Object treeElement) {
+	protected void updateHierarchy(FileElement treeElement) {
 
 		boolean whiteChecked = determineShouldBeWhiteChecked(treeElement);
 		boolean shouldBeAtLeastGray = determineShouldBeAtLeastGrayChecked(treeElement);
@@ -1208,7 +925,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		}
 
 		// proceed up the tree element hierarchy but gray select all of them
-		Object parent = treeContentProvider.getParent(treeElement);
+		Object parent = foldersContentProvider.getParent(treeElement);
 		if (parent != null) {
 			grayUpdateHierarchy(parent);
 		}
@@ -1221,7 +938,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 		treeViewer.getTree().setFocus();
 		if (treeViewer.getSelection().isEmpty()) {
-			Object[] elements = treeContentProvider.getElements(root);
+			Object[] elements = foldersContentProvider.getElements(root);
 			if (elements.length > 0) {
 				StructuredSelection selection = new StructuredSelection(elements[0]);
 				treeViewer.setSelection(selection);
@@ -1277,7 +994,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 *            the entry to add to the history
 	 */
 	protected String[] addToHistory(String[] history, String newEntry) {
-		java.util.ArrayList l = new java.util.ArrayList(Arrays.asList(history));
+		ArrayList<String> l = new ArrayList<String>(Arrays.asList(history));
 		addToHistory(l, newEntry);
 		String[] r = new String[l.size()];
 		l.toArray(r);
@@ -1295,7 +1012,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * @param newEntry
 	 *            the entry to add to the history
 	 */
-	protected void addToHistory(List history, String newEntry) {
+	protected void addToHistory(List<String> history, String newEntry) {
 		history.remove(newEntry);
 		history.add(0, newEntry);
 
@@ -1414,8 +1131,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * @return <code>true</code> for Yes, and <code>false</code> for No
 	 */
 	protected boolean queryYesNoQuestion(String message) {
-		MessageDialog dialog = new MessageDialog(getContainer().getShell(), IDEWorkbenchMessages.Question, (Image) null, message, MessageDialog.NONE,
-				new String[] { IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL }, 0) {
+		MessageDialog dialog = new MessageDialog(getContainer().getShell(), "Question", (Image) null, message, MessageDialog.NONE, new String[] {
+				IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL }, 0) {
 			protected int getShellStyle() {
 				return super.getShellStyle() | SWT.SHEET;
 			}
@@ -1467,32 +1184,13 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	}
 
 	/**
-	 * Create the options specification widgets.
-	 * 
-	 * @param parent
-	 *            org.eclipse.swt.widgets.Composite
-	 */
-	protected void createOptionsGroup(Composite parent) {
-		// options group
-		Group optionsGroup = new Group(parent, SWT.NONE);
-		GridLayout layout = new GridLayout();
-		optionsGroup.setLayout(layout);
-		optionsGroup.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.GRAB_HORIZONTAL));
-		optionsGroup.setText(IDEWorkbenchMessages.WizardExportPage_options);
-		optionsGroup.setFont(parent.getFont());
-
-		createOptionsGroupButtons(optionsGroup);
-
-	}
-
-	/**
 	 * Display an error dialog with the specified message.
 	 * 
 	 * @param message
 	 *            the error message
 	 */
 	protected void displayErrorDialog(String message) {
-		MessageDialog.open(MessageDialog.ERROR, getContainer().getShell(), getErrorDialogTitle(), message, SWT.SHEET);
+		MessageDialog.open(MessageDialog.ERROR, getContainer().getShell(), "Import Problems", message, SWT.SHEET);
 	}
 
 	/**
@@ -1505,7 +1203,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		String message = exception.getMessage();
 		// Some system exceptions have no message
 		if (message == null) {
-			message = NLS.bind(IDEWorkbenchMessages.WizardDataTransfer_exceptionMessage, exception);
+			message = NLS.bind("Error occurred during operation: {0}", exception);
 		}
 		displayErrorDialog(message);
 	}
@@ -1523,13 +1221,13 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * Create the import source selection widget
 	 */
 	protected void createFileSelectionGroup(Composite parent) {
-
 		root = new FileElement("Dummy", null, true);
-		this.treeContentProvider = getFolderProvider();
-		this.listContentProvider = getFileProvider();
-		this.treeLabelProvider = new WorkbenchLabelProvider();
-		this.listLabelProvider = new WorkbenchLabelProvider();
-		createContents(parent, SWT.NONE, DialogUtil.inRegularFontMode(parent));
+		this.foldersContentProvider = new FolderContentProvider(fileStructureProvider);
+		this.filesContentProvider = new FileContentProvider(fileStructureProvider);
+		this.folderLabelProvider = new WorkbenchLabelProvider();
+		this.filesLabelProvider = new WorkbenchLabelProvider();
+
+		createContents(parent, SWT.NONE);
 
 		ICheckStateListener listener = new ICheckStateListener() {
 			public void checkStateChanged(CheckStateChangedEvent event) {
@@ -1544,13 +1242,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 	}
 
-	/*
-	 * @see WizardDataTransferPage.getErrorDialogTitle()
-	 */
-	protected String getErrorDialogTitle() {
-		return IDEWorkbenchMessages.WizardImportPage_errorDialogTitle;
-	}
-
 	/**
 	 * Returns this page's list of currently-specified resources to be imported.
 	 * This is the primary resource selection facility accessor for subclasses.
@@ -1561,13 +1252,13 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	protected List<FileElement> getSelectedResources() {
 		final ArrayList<FileElement> returnValue = new ArrayList<FileElement>();
 
-		IElementFilter passThroughFilter = new IElementFilter() {
+		IFileElementFilter passThroughFilter = new IFileElementFilter() {
 
-			public void filterElements(Collection elements, IProgressMonitor monitor) {
+			public void filterElements(Collection<FileElement> elements, IProgressMonitor monitor) {
 				returnValue.addAll(elements);
 			}
 
-			public void filterElements(Object[] elements, IProgressMonitor monitor) {
+			public void filterElements(FileElement[] elements, IProgressMonitor monitor) {
 				for (int i = 0; i < elements.length; i++) {
 					returnValue.add((FileElement) elements[i]);
 				}
@@ -1577,7 +1268,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		try {
 			// Iterate through the children of the root as the root is not in
 			// the store
-			Object[] children = treeContentProvider.getChildren(root);
+			FileElement[] children = foldersContentProvider.getChildren(root);
 			for (int i = 0; i < children.length; ++i) {
 				findAllSelectedListElements(children[i], null, whiteCheckedTreeItems.contains(children[i]), passThroughFilter, null);
 			}
@@ -1593,33 +1284,19 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 * filtered by the IElementFilter.
 	 * 
 	 */
-	protected void getSelectedResources(IElementFilter filter, IProgressMonitor monitor) throws InterruptedException {
+	protected void getSelectedResources(IFileElementFilter filter, IProgressMonitor monitor) throws InterruptedException {
 		// Iterate through the children of the root as the root is not in
 		// the store
-		Object[] children = treeContentProvider.getChildren(root);
+		FileElement[] children = foldersContentProvider.getChildren(root);
 		for (int i = 0; i < children.length; ++i) {
 			findAllSelectedListElements(children[i], null, whiteCheckedTreeItems.contains(children[i]), filter, monitor);
 		}
-	}
-
-	/**
-	 * Returns the error message for when the source conflicts with the
-	 * destination.
-	 */
-	protected final String getSourceConflictMessage() {
-		return (IDEWorkbenchMessages.WizardImportPage_importOnReceiver);
 	}
 
 	/*
 	 * @see WizardDataTransferPage.determinePageCompletion.
 	 */
 	protected boolean determinePageCompletion() {
-		// Check for valid projects before making the user do anything
-		if (noOpenProjects()) {
-			setErrorMessage(IDEWorkbenchMessages.WizardImportPage_noOpenProjects);
-			return false;
-		}
-
 		boolean complete = validateSourceGroup() && validateDestinationGroup() && validateOptionsGroup();
 
 		// Avoid draw flicker by not clearing the error
@@ -1629,21 +1306,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		}
 
 		return complete;
-	}
-
-	/**
-	 * Returns whether or not the passed workspace has any open projects
-	 * 
-	 * @return boolean
-	 */
-	private boolean noOpenProjects() {
-		IProject[] projects = IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProjects();
-		for (int i = 0; i < projects.length; i++) {
-			if (projects[i].isOpen()) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	/*
@@ -1660,8 +1322,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 		createSourceGroup(composite);
 
-		createOptionsGroup(composite);
-
 		restoreWidgetValues();
 		updateWidgetEnablements();
 		setPageComplete(determinePageCompletion());
@@ -1669,60 +1329,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 		setControl(composite);
 		validateSourceGroup();
-	}
-
-	/**
-	 * Create the import options specification widgets.
-	 */
-	protected void createOptionsGroupButtons(Group optionsGroup) {
-
-		// overwrite... checkbox
-		overwriteExistingResourcesCheckbox = new Button(optionsGroup, SWT.CHECK);
-		overwriteExistingResourcesCheckbox.setFont(optionsGroup.getFont());
-		overwriteExistingResourcesCheckbox.setText(DataTransferMessages.FileImport_overwriteExisting);
-
-		updateWidgetEnablements();
-	}
-
-	private Composite createAdvancedSection(Composite parent) {
-		Composite linkedResourceComposite = new Composite(parent, SWT.NONE);
-		linkedResourceComposite.setFont(parent.getFont());
-		linkedResourceComposite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		GridLayout layout = new GridLayout();
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
-		linkedResourceComposite.setLayout(layout);
-
-		Button tmp = new Button(linkedResourceComposite, SWT.CHECK);
-		int indent = tmp.computeSize(SWT.DEFAULT, SWT.DEFAULT).x;
-		tmp.dispose();
-
-		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		gridData.horizontalSpan = 2;
-		gridData.horizontalIndent = indent;
-
-		Composite relativeGroup = new Composite(linkedResourceComposite, 0);
-		gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		gridData.horizontalIndent = indent;
-		relativeGroup.setFont(parent.getFont());
-		relativeGroup.setLayoutData(gridData);
-
-		layout = new GridLayout();
-		layout.numColumns = 2;
-		layout.marginWidth = 0;
-		layout.marginHeight = 0;
-		layout.marginLeft = 0;
-		layout.marginRight = 0;
-		layout.marginTop = 0;
-		layout.marginBottom = 0;
-		layout.verticalSpacing = 0;
-		layout.horizontalSpacing = 0;
-		relativeGroup.setLayout(layout);
-
-		updateWidgetEnablements();
-
-		return linkedResourceComposite;
-
 	}
 
 	/**
@@ -1737,13 +1343,13 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		sourceContainerGroup.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.GRAB_HORIZONTAL));
 
 		Label groupLabel = new Label(sourceContainerGroup, SWT.NONE);
-		groupLabel.setText(getSourceLabel());
+		groupLabel.setText("From director&y:");
 		groupLabel.setFont(parent.getFont());
 
 		// source name entry field
 		sourceNameField = new Combo(sourceContainerGroup, SWT.BORDER);
 		GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.GRAB_HORIZONTAL);
-		data.widthHint = SIZING_TEXT_FIELD_WIDTH;
+		data.widthHint = 250;
 		sourceNameField.setLayoutData(data);
 		sourceNameField.setFont(parent.getFont());
 
@@ -1800,8 +1406,18 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 		// source browse button
 		sourceBrowseButton = new Button(sourceContainerGroup, SWT.PUSH);
-		sourceBrowseButton.setText(DataTransferMessages.DataTransfer_browse);
-		sourceBrowseButton.addListener(SWT.Selection, this);
+		sourceBrowseButton.setText("B&rowse...");
+		sourceBrowseButton.addListener(SWT.Selection, new Listener() {
+			
+			@Override
+			public void handleEvent(Event event) {
+				if (event.widget == sourceBrowseButton) {
+					handleSourceBrowseButtonPressed();
+				}
+
+				updateWidgetEnablements();
+			}
+		});
 		sourceBrowseButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
 		sourceBrowseButton.setFont(parent.getFont());
 		setButtonLayoutData(sourceBrowseButton);
@@ -1813,7 +1429,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 	private void updateFromSourceField() {
 		setSourceName(sourceNameField.getText());
-		
+
 		// Update enablements when this is selected
 		updateWidgetEnablements();
 		fileStructureProvider.clearVisitedDirs();
@@ -1859,51 +1475,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 			return true;
 		}
 
-		setErrorMessage(DataTransferMessages.FileImport_invalidSource);
+		setErrorMessage("Source directory is not valid or has not been specified.");
 		return false;
-	}
-
-	/**
-	 * Execute the passed import operation. Answer a boolean indicating success.
-	 */
-	protected boolean executeImportOperation(ImportOperation op) {
-		initializeOperation(op);
-
-		try {
-			getContainer().run(true, true, op);
-		} catch (InterruptedException e) {
-			return false;
-		} catch (InvocationTargetException e) {
-			displayErrorDialog(e.getTargetException());
-			return false;
-		}
-
-		IStatus status = op.getStatus();
-		if (!status.isOK()) {
-			ErrorDialog.openError(getContainer().getShell(), DataTransferMessages.FileImport_importProblems, null, // no
-																													// special
-																													// message
-					status);
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Returns a content provider for <code>FileSystemElement</code>s that
-	 * returns only files as children.
-	 */
-	protected ITreeContentProvider getFileProvider() {
-		return new WorkbenchContentProvider() {
-			public Object[] getChildren(Object o) {
-				if (o instanceof FileElement) {
-					FileElement element = (FileElement) o;
-					return element.getFiles(fileStructureProvider).toArray();
-				}
-				return new Object[0];
-			}
-		};
 	}
 
 	/**
@@ -1919,34 +1492,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 		}
 
 		return selectFiles(sourceDirectory, fileStructureProvider);
-	}
-
-	/**
-	 * Returns a content provider for <code>FileSystemElement</code>s that
-	 * returns only folders as children.
-	 */
-	protected ITreeContentProvider getFolderProvider() {
-		return new WorkbenchContentProvider() {
-			public Object[] getChildren(Object o) {
-				if (o instanceof FileElement) {
-					FileElement element = (FileElement) o;
-					return element.getFolders(fileStructureProvider).toArray();
-				}
-				return new Object[0];
-			}
-
-			public boolean hasChildren(Object o) {
-				if (o instanceof FileElement) {
-					FileElement element = (FileElement) o;
-					if (element.isPopulated()) {
-						return getChildren(element).length > 0;
-					}
-
-					return true;
-				}
-				return false;
-			}
-		};
 	}
 
 	/**
@@ -2000,30 +1545,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	}
 
 	/**
-	 * Answer the string to display as the label for the source specification
-	 * field
-	 */
-	protected String getSourceLabel() {
-		return DataTransferMessages.FileImport_fromDirectory;
-	}
-
-	/**
-	 * Handle all events and enablements for widgets in this dialog
-	 * 
-	 * @param event
-	 *            Event
-	 */
-	public void handleEvent(Event event) {
-		if (event.widget == sourceBrowseButton) {
-			handleSourceBrowseButtonPressed();
-		}
-
-		Widget source = event.widget;
-
-		updateWidgetEnablements();
-	}
-
-	/**
 	 * Open an appropriate source browser so that the user can specify a source
 	 * to import from
 	 */
@@ -2031,8 +1552,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 		String currentSource = this.sourceNameField.getText();
 		DirectoryDialog dialog = new DirectoryDialog(sourceNameField.getShell(), SWT.SAVE | SWT.SHEET);
-		dialog.setText(SELECT_SOURCE_TITLE);
-		dialog.setMessage(SELECT_SOURCE_MESSAGE);
+		dialog.setText("Import from directory");
+		dialog.setMessage("Select a directory to import from.");
 		dialog.setFilterPath(getSourceDirectoryName(currentSource));
 
 		String selectedDirectory = dialog.open();
@@ -2046,14 +1567,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 			setSourceName(selectedDirectory);
 			setTreeviewFocus();
 		}
-	}
-
-	/**
-	 * Initializes the specified operation appropriately.
-	 */
-	protected void initializeOperation(ImportOperation op) {
-		op.setCreateContainerStructure(false);
-		op.setOverwriteResources(overwriteExistingResourcesCheckbox.getSelection());
 	}
 
 	/**
@@ -2094,9 +1607,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 				sourceNameField.add(sourceNames[i]);
 			}
 
-			// radio buttons and checkboxes
-			overwriteExistingResourcesCheckbox.setSelection(settings.getBoolean(STORE_OVERWRITE_EXISTING_RESOURCES_ID));
-
 			updateWidgetEnablements();
 		}
 	}
@@ -2116,9 +1626,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 
 			sourceNames = addToHistory(sourceNames, getSourceDirectoryName());
 			settings.put(STORE_SOURCE_NAMES_ID, sourceNames);
-
-			// radio buttons and checkboxes
-			settings.put(STORE_OVERWRITE_EXISTING_RESOURCES_ID, overwriteExistingResourcesCheckbox.getSelection());
 
 		}
 	}
@@ -2151,7 +1658,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 */
 	protected void setSourceName(String path) {
 
-		if (path.length() > 0) {
+		if ((path.length() > 0) && (!path.equals(actualPath))) {
 
 			String[] currentItems = this.sourceNameField.getItems();
 			int selectionIndex = -1;
@@ -2169,7 +1676,8 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 				selectionIndex = oldLength;
 			}
 			this.sourceNameField.select(selectionIndex);
-
+			this.actualPath = path;
+			
 			resetSelection();
 		}
 	}
@@ -2180,7 +1688,6 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	 */
 	public void setVisible(boolean visible) {
 		super.setVisible(visible);
-		resetSelection();
 		if (visible) {
 			setTreeviewFocus();
 			this.sourceNameField.setFocus();
@@ -2188,74 +1695,11 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	}
 
 	/**
-	 * Update the selections with those in map . Implemented here to give inner
-	 * class visibility
-	 * 
-	 * @param map
-	 *            Map - key tree elements, values Lists of list elements
-	 */
-	protected void updateSelections(final Map map) {
-		Runnable runnable = new Runnable() {
-			public void run() {
-				// We are replacing all selected items with the given selected
-				// items,
-				// so reinitialize everything.
-				listViewer.setAllChecked(false);
-				treeViewer.setCheckedElements(new Object[0]);
-				whiteCheckedTreeItems = new HashSet();
-				Set selectedNodes = new HashSet();
-				checkedStateStore = new HashMap();
-
-				// Update the store before the hierarchy to prevent updating
-				// parents
-				// before all of the children are done
-				Iterator keyIterator = map.keySet().iterator();
-				while (keyIterator.hasNext()) {
-					Object key = keyIterator.next();
-					List selections = (List) map.get(key);
-					// Replace the items in the checked state store with those
-					// from
-					// the supplied items
-					checkedStateStore.put(key, selections);
-					selectedNodes.add(key);
-					// proceed up the tree element hierarchy
-					Object parent = treeContentProvider.getParent(key);
-					if (parent != null) {
-						// proceed up the tree element hierarchy and make sure
-						// everything is in the table
-						primeHierarchyForSelection(parent, selectedNodes);
-					}
-				}
-
-				// Update the checked tree items. Since each tree item has a
-				// selected
-				// item, all the tree items will be gray checked.
-				treeViewer.setCheckedElements(checkedStateStore.keySet().toArray());
-				treeViewer.setGrayedElements(checkedStateStore.keySet().toArray());
-
-				// Update the listView of the currently selected tree item.
-				if (currentTreeSelection != null) {
-					Object displayItems = map.get(currentTreeSelection);
-					if (displayItems != null) {
-						listViewer.setCheckedElements(((List) displayItems).toArray());
-					}
-				}
-			}
-		};
-
-		BusyIndicator.showWhile(getShell().getDisplay(), runnable);
-	}
-
-	/**
 	 * Check if widgets are enabled or disabled by a change in the dialog.
 	 * Provided here to give access to inner classes.
 	 */
 	protected void updateWidgetEnablements() {
-		boolean pageComplete = determinePageCompletion();
-		setPageComplete(pageComplete);
-		if (pageComplete) {
-			setMessage(null);
-		}
+		updatePageCompletion();
 	}
 
 	/**
@@ -2265,39 +1709,18 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage implement
 	protected boolean validateSourceGroup() {
 		File sourceDirectory = getSourceDirectory();
 		if (sourceDirectory == null) {
-			setMessage(SOURCE_EMPTY_MESSAGE);
+			setMessage("Source must not be empty.");
 			return false;
 		}
 
-		if (sourceConflictsWithDestination(new Path(sourceDirectory.getPath()))) {
-			setMessage(null);
-			setErrorMessage(getSourceConflictMessage());
-			return false;
-		}
-
-		List resourcesToExport = getAllWhiteCheckedItems();
+		List<FileElement> resourcesToExport = getAllWhiteCheckedItems();
 		if (resourcesToExport.size() == 0) {
 			setMessage(null);
-			setErrorMessage(DataTransferMessages.FileImport_noneSelected);
+			setErrorMessage("There are no project sets currently selected for import.");
 			return false;
 		}
 
 		setErrorMessage(null);
 		return true;
 	}
-
-	/**
-	 * Returns whether the source location conflicts with the destination
-	 * resource. This will occur if the source is already under the destination.
-	 * 
-	 * @param sourcePath
-	 *            the path to check
-	 * @return <code>true</code> if there is a conflict, <code>false</code> if
-	 *         not
-	 */
-	protected boolean sourceConflictsWithDestination(IPath sourcePath) {
-		// TODO
-		return false;
-	}
-
 }

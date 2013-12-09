@@ -21,7 +21,6 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.internal.WorkbenchImages;
 import org.eclipse.ui.internal.WorkbenchPlugin;
-import org.eclipse.ui.model.AdaptableList;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 /**
@@ -39,29 +38,28 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
  * IWorkbenchAdapter adapter used for navigation and display in the workbench.
  */
 public class FileElement implements IAdaptable {
-    private String name;
+	private String name;
 
-    private File file;
+	private File file;
 
-    /*
-     * Wait until a child is added to initialize the receiver's lists. Doing so
-     * minimizes the amount of memory that is allocated when a large directory
-     * structure is being processed.
-     */
-    private List<FileElement> folders = null;
+	/*
+	 * Wait until a child is added to initialize the receiver's lists. Doing so
+	 * minimizes the amount of memory that is allocated when a large directory
+	 * structure is being processed.
+	 */
+	private List<FileElement> folders = null;
 
-    private List<FileElement> files = null;
+	private List<FileElement> files = null;
 
-    private boolean isDirectory = false;
+	private boolean isDirectory = false;
 
-    private FileElement parent;
+	private FileElement parent;
 
 	private boolean populated = false;
 
 	/**
-	 * Returns a list of the files that are immediate children. Use the supplied provider
-	 * if it needs to be populated.
-	 * of this folder.
+	 * Returns a list of the files that are immediate children. Use the supplied
+	 * provider if it needs to be populated. of this folder.
 	 */
 	public List<FileElement> getFiles(FileStructureProvider provider) {
 		if (!populated) {
@@ -71,9 +69,8 @@ public class FileElement implements IAdaptable {
 	}
 
 	/**
-	 * Returns a list of the folders that are immediate children. Use the supplied provider
-	 * if it needs to be populated.
-	 * of this folder.
+	 * Returns a list of the folders that are immediate children. Use the
+	 * supplied provider if it needs to be populated. of this folder.
 	 */
 	public List<FileElement> getFolders(FileStructureProvider provider) {
 		if (!populated) {
@@ -90,23 +87,26 @@ public class FileElement implements IAdaptable {
 	}
 
 	/**
-	 * Populate the files and folders of the receiver using the supplied structure provider.
-	 * @param provider org.eclipse.ui.wizards.datatransfer.IImportStructureProvider
+	 * Populate the files and folders of the receiver using the supplied
+	 * structure provider.
+	 * 
+	 * @param provider
+	 *            org.eclipse.ui.wizards.datatransfer.IImportStructureProvider
 	 */
 	private void populate(FileStructureProvider provider) {
-
 		File fileSystemObject = getFile();
+		if (fileSystemObject != null) {
+			List<File> children = provider.getChildren(fileSystemObject);
+			if (children != null) {
+				Iterator<File> childrenEnum = children.iterator();
+				while (childrenEnum.hasNext()) {
+					File file = childrenEnum.next();
 
-		List<File> children = provider.getChildren(fileSystemObject);
-		if (children != null) {
-			Iterator<File> childrenEnum = children.iterator();
-			while (childrenEnum.hasNext()) {
-				File file = childrenEnum.next();
-
-				String elementLabel = provider.getLabel(file);
-				//Create one level below
-				FileElement result = new FileElement(elementLabel, this, file.isDirectory());
-				result.setFile(file);
+					String elementLabel = provider.getLabel(file);
+					// Create one level below
+					FileElement result = new FileElement(elementLabel, this, file.isDirectory());
+					result.setFile(file);
+				}
 			}
 		}
 		setPopulated();
@@ -134,7 +134,7 @@ public class FileElement implements IAdaptable {
             return parent;
         }
 
-        /**
+	/**
          * Returns an appropriate label for this file system element.
          */
         public String getLabel(Object o) {
@@ -157,48 +157,47 @@ public class FileElement implements IAdaptable {
     };
 
     /**
-     * Creates a new <code>FileSystemElement</code> and initializes it and its
-     * parent if applicable.
-     * 
-     * @param name
-     *            The name of the element
-     * @param parent
-     *            The parent element. May be <code>null</code>
-     * @param isDirectory
-     *            if <code>true</code> this is representing a directory,
-     *            otherwise it is a file.
-     */
-    public FileElement(String name, FileElement parent,
-            boolean isDirectory) {
-        this.name = name;
-        this.parent = parent;
-        this.isDirectory = isDirectory;
-        if (parent != null) {
+	 * Creates a new <code>FileSystemElement</code> and initializes it and its
+	 * parent if applicable.
+	 * 
+	 * @param name
+	 *            The name of the element
+	 * @param parent
+	 *            The parent element. May be <code>null</code>
+	 * @param isDirectory
+	 *            if <code>true</code> this is representing a directory,
+	 *            otherwise it is a file.
+	 */
+	public FileElement(String name, FileElement parent, boolean isDirectory) {
+		this.name = name;
+		this.parent = parent;
+		this.isDirectory = isDirectory;
+		if (parent != null) {
 			parent.addChild(this);
 		}
-    }
+	}
 
-    /**
-     * Adds the passed child to this object's collection of children.
-     * 
-     * @param child
-     *            FileSystemElement
-     */
-    public void addChild(FileElement child) {
-        if (child.isDirectory()) {
-            if (folders == null) {
+	/**
+	 * Adds the passed child to this object's collection of children.
+	 * 
+	 * @param child
+	 *            FileSystemElement
+	 */
+	public void addChild(FileElement child) {
+		if (child.isDirectory()) {
+			if (folders == null) {
 				folders = new ArrayList<FileElement>(1);
 			}
-            folders.add(child);
-        } else {
-            if (files == null) {
+			folders.add(child);
+		} else {
+			if (files == null) {
 				files = new ArrayList<FileElement>(1);
 			}
-            files.add(child);
-        }
-    }
-
-    /**
+			files.add(child);
+		}
+	}
+	
+	/**
      * Returns the adapter
      */
     public Object getAdapter(Class adapter) {
@@ -210,121 +209,132 @@ public class FileElement implements IAdaptable {
     }
 
     /**
-     * Returns the extension of this element's filename.
-     * 
-     * @return The extension or an empty string if there is no extension.
-     */
-    public String getFileNameExtension() {
-        int lastDot = name.lastIndexOf('.');
-        return lastDot < 0 ? "" : name.substring(lastDot + 1); //$NON-NLS-1$
-    }
+	 * Returns the extension of this element's filename.
+	 * 
+	 * @return The extension or an empty string if there is no extension.
+	 */
+	public String getFileNameExtension() {
+		int lastDot = name.lastIndexOf('.');
+		return lastDot < 0 ? "" : name.substring(lastDot + 1); //$NON-NLS-1$
+	}
+	
+	/**
+	 * @return The name
+	 */
+	public String getName() {
+		return name;
+	}
 
-    /**
-     * Answer the files property of this element. Answer an empty list if the
-     * files property is null. This method should not be used to add children to
-     * the receiver. Use addChild(FileSystemElement) instead.
-     * 
-     * @return AdaptableList The list of files parented by the receiver.
-     */
-    public List<FileElement> getFiles() {
-        if (files == null) {
-            // lazily initialize (can't share result since it's modifiable)
-            files = new ArrayList<FileElement>(0);
-        }
-        return files;
-    }
+	/**
+	 * Answer the files property of this element. Answer an empty list if the
+	 * files property is null. This method should not be used to add children to
+	 * the receiver. Use addChild(FileSystemElement) instead.
+	 * 
+	 * @return AdaptableList The list of files parented by the receiver.
+	 */
+	public List<FileElement> getFiles() {
+		if (files == null) {
+			// lazily initialize (can't share result since it's modifiable)
+			files = new ArrayList<FileElement>(0);
+		}
+		return files;
+	}
 
-    /**
-     * Returns the file system object property of this element
-     * 
-     * @return the file system object
-     */
-    public File getFile() {
-        return file;
-    }
+	/**
+	 * Returns the file system object property of this element
+	 * 
+	 * @return the file system object
+	 */
+	public File getFile() {
+		return file;
+	}
 
-    /**
-     * Returns a list of the folders that are immediate children of this folder.
-     * Answer an empty list if the folders property is null. This method should
-     * not be used to add children to the receiver. Use
-     * addChild(FileSystemElement) instead.
-     * 
-     * @return AdapatableList The list of folders parented by the receiver.
-     */
-    public List<FileElement> getFolders() {
-        if (folders == null) {
-            // lazily initialize (can't share result since it's modifiable)
-            folders = new ArrayList<FileElement>(0);
-        }
-        return folders;
-    }
+	/**
+	 * Returns a list of the folders that are immediate children of this folder.
+	 * Answer an empty list if the folders property is null. This method should
+	 * not be used to add children to the receiver. Use
+	 * addChild(FileSystemElement) instead.
+	 * 
+	 * @return AdapatableList The list of folders parented by the receiver.
+	 */
+	public List<FileElement> getFolders() {
+		if (folders == null) {
+			// lazily initialize (can't share result since it's modifiable)
+			folders = new ArrayList<FileElement>(0);
+		}
+		return folders;
+	}
 
-    /**
-     * Return the parent of this element.
-     * 
-     * @return the parent file system element, or <code>null</code> if this is
-     *         the root
-     */
-    public FileElement getParent() {
-        return this.parent;
-    }
+	/**
+	 * Return the parent of this element.
+	 * 
+	 * @return the parent file system element, or <code>null</code> if this is
+	 *         the root
+	 */
+	public FileElement getParent() {
+		return this.parent;
+	}
 
-    /**
-     * @return boolean <code>true</code> if this element represents a
-     *         directory, and <code>false</code> otherwise.
-     */
-    public boolean isDirectory() {
-        return isDirectory;
-    }
+	/**
+	 * @return boolean <code>true</code> if this element represents a directory,
+	 *         and <code>false</code> otherwise.
+	 */
+	public boolean isDirectory() {
+		return isDirectory;
+	}
 
-    /**
-     * Removes a sub-folder from this file system element.
-     * @param child The child to remove.
-     */
-    public void removeFolder(FileElement child) {
-        if (folders == null) {
+	/**
+	 * Removes a sub-folder from this file system element.
+	 * 
+	 * @param child
+	 *            The child to remove.
+	 */
+	public void removeFolder(FileElement child) {
+		if (folders == null) {
 			return;
 		}
-        folders.remove(child);
-        child.setParent(null);
-    }
+		folders.remove(child);
+		child.setParent(null);
+	}
 
-    /**
-     * Set the file system object property of this element
-     * 
-     * @param value
-     *            the file system object
-     */
-    public void setFile(File value) {
-        file = value;
-    }
+	/**
+	 * Set the file system object property of this element
+	 * 
+	 * @param value
+	 *            the file system object
+	 */
+	public void setFile(File value) {
+		file = value;
+	}
 
-    /**
-     * Sets the parent of this file system element.
-     * @param element The new parent.
-     */
-    public void setParent(FileElement element) {
-        parent = element;
-    }
+	/**
+	 * Sets the parent of this file system element.
+	 * 
+	 * @param element
+	 *            The new parent.
+	 */
+	public void setParent(FileElement element) {
+		parent = element;
+	}
 
-    /**
-     * For debugging purposes only.
-     */
-    public String toString() {
-        StringBuffer buf = new StringBuffer();
-        if (isDirectory()) {
-            buf.append("Folder(");//$NON-NLS-1$
-        } else {
-            buf.append("File(");//$NON-NLS-1$
-        }
-        buf.append(name).append(")");//$NON-NLS-1$
-        if (!isDirectory()) {
-            return buf.toString();
-        }
-        buf.append(" folders: ");//$NON-NLS-1$
-        buf.append(folders);
-        buf.append(" files: ");//$NON-NLS-1$
-        buf.append(files);
-        return buf.toString();
-    }
+	/**
+	 * For debugging purposes only.
+	 */
+	public String toString() {
+		StringBuffer buf = new StringBuffer();
+		if (isDirectory()) {
+			buf.append("Folder(");//$NON-NLS-1$
+		} else {
+			buf.append("File(");//$NON-NLS-1$
+		}
+		buf.append(name).append(")");//$NON-NLS-1$
+		if (!isDirectory()) {
+			return buf.toString();
+		}
+		buf.append(" folders: ");//$NON-NLS-1$
+		buf.append(folders);
+		buf.append(" files: ");//$NON-NLS-1$
+		buf.append(files);
+		return buf.toString();
+	}
 }

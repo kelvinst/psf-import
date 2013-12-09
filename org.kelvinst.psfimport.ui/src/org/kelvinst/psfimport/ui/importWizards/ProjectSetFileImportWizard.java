@@ -50,10 +50,10 @@ public class ProjectSetFileImportWizard extends Wizard implements IImportWizard 
 	public boolean performFinish() {
 		final boolean[] result = new boolean[] { false };
 		try {
-			List resources = filesPage.getSelectedResources();
+			List<FileElement> resources = filesPage.getSelectedResources();
 
-			for (Object resource : resources) {
-				File file = (File) resource;
+			for (FileElement element : resources) {
+				File file = element.getFile();
 				if (!file.isDirectory()) {
 					new ImportProjectSetOperation(workingSetsPage.isRunInBackgroundOn() ? null : getContainer(), file.getCanonicalPath(),
 						workingSetsPage.getWorkingSets()).run();
