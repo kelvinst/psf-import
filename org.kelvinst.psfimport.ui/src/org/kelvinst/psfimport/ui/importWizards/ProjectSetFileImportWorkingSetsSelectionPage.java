@@ -48,7 +48,6 @@ import org.kelvinst.psfimport.ui.IPreferenceIds;
 import org.kelvinst.psfimport.ui.PsfImportPlugin;
 
 public class ProjectSetFileImportWorkingSetsSelectionPage extends WizardPage {
-	private boolean runInBackground = isRunInBackgroundPreferenceOn();
 	// a wizard shouldn't be in an error state until the state has been modified
 	// by the user
 	private int messageType = NONE;
@@ -58,19 +57,21 @@ public class ProjectSetFileImportWorkingSetsSelectionPage extends WizardPage {
 	private static final String WORKINGSET_SELECTION_HISTORY = "workingset_selection_history"; //$NON-NLS-1$
 	private static final int MAX_HISTORY_SIZE = 5;
 
+	private Button runInBackgroundCheckbox;
+	
 	private Label workingSetLabel;
 	private Combo workingSetCombo;
 	private Button workingSetSelectButton;
 	private Button workingSetEnableButton;
 	private Button workingSetAutomagicModeButton;
-
+	
 	private IWorkingSet[] selectedWorkingSets;
 	private ArrayList<String> workingSetSelectionHistory;
 	private String[] workingSetTypeIds;
 
-	public ProjectSetFileImportWorkingSetsSelectionPage(String pageName, String title) {
-		super(pageName, title, null);
-		setDescription("Import the team project file.");
+	public ProjectSetFileImportWorkingSetsSelectionPage() {
+		super("projectSetFilesPage", "Import project sets", null);
+		setDescription("Configure the working sets to apply to the imported projects.");
 	}
 
 	/*
@@ -127,15 +128,10 @@ public class ProjectSetFileImportWorkingSetsSelectionPage extends WizardPage {
 		gd1.heightHint = SWT.DEFAULT;
 		gd1.horizontalSpan = 3;
 
-		Button runInBackgroundCheckbox = new Button(composite, SWT.CHECK);
+		runInBackgroundCheckbox = new Button(composite, SWT.CHECK);
 		runInBackgroundCheckbox.setText("Run the import in the bac&kground");
 		runInBackgroundCheckbox.setLayoutData(gd1);
 		runInBackgroundCheckbox.setSelection(isRunInBackgroundPreferenceOn());
-		runInBackgroundCheckbox.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				runInBackground = !runInBackground;
-			}
-		});
 
 		setControl(composite);
 		Dialog.applyDialogFont(parent);
@@ -164,7 +160,7 @@ public class ProjectSetFileImportWorkingSetsSelectionPage extends WizardPage {
 	}
 
 	public boolean isRunInBackgroundOn() {
-		return runInBackground;
+		return runInBackgroundCheckbox.getSelection();
 	}
 
 	public boolean isAutomagicMode() {

@@ -1,6 +1,12 @@
 package org.kelvinst.psfimport.ui;
 
+import java.io.IOException;
+
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
+import org.eclipse.ui.internal.ide.StatusUtil;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -58,4 +64,44 @@ public class PsfImportPlugin extends AbstractUIPlugin {
 	public static ImageDescriptor getImageDescriptor(String path) {
 		return imageDescriptorFromPlugin(PLUGIN_ID, path);
 	}
+
+    /**
+     * Logs the given message and throwable to the platform log.
+     * 
+     * If you have a status object in hand call log(String, IStatus) instead.
+     * 
+     * This convenience method is for internal use by the IDE Workbench only and
+     * must not be called outside the IDE Workbench.
+     * 
+     * @param message
+     *            A high level UI message describing when the problem happened.
+     * @param t
+     *            The throwable from where the problem actually occurred.
+     */
+    public static void error(String message, Throwable t) {
+        error(message, new Status(IStatus.ERROR, PLUGIN_ID, IStatus.ERROR,
+        		message, null));
+    }
+
+    /**
+     * Logs the given message and status to the platform log.
+     * 
+     * This convenience method is for internal use by the IDE Workbench only and
+     * must not be called outside the IDE Workbench.
+     * 
+     * @param message
+     *            A high level UI message describing when the problem happened.
+     *            May be <code>null</code>.
+     * @param status
+     *            The status describing the problem. Must not be null.
+     */
+    public static void error(String message, IStatus status) {
+        if (message != null) {
+            getDefault().getLog().log(
+                    new Status(IStatus.ERROR, PLUGIN_ID, IStatus.ERROR,
+							message, null));
+        }
+
+        getDefault().getLog().log(status);
+    }
 }
