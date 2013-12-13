@@ -5,7 +5,7 @@
    <extension
          point="org.eclipse.ui.importWizards">
       <wizard
-            class="org.kelvinst.psfimport.ui.importWizards.ProjectSetFileImportWizard"
+            class="org.kelvinst.psfimport.ui.importWizards.PsfImportWizard"
             icon="icons/sample.gif"
             id="org.kelvinst.psfimport.ui.importWizards.ProjectSetFileImportWizard"
             name="Project Set Files">

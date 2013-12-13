@@ -47,7 +47,7 @@ import org.eclipse.ui.internal.dialogs.SimpleWorkingSetSelectionDialog;
 import org.kelvinst.psfimport.ui.IPreferenceIds;
 import org.kelvinst.psfimport.ui.PsfImportPlugin;
 
-public class ProjectSetFileImportWorkingSetsSelectionPage extends WizardPage {
+public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 	// a wizard shouldn't be in an error state until the state has been modified
 	// by the user
 	private int messageType = NONE;
@@ -56,8 +56,6 @@ public class ProjectSetFileImportWorkingSetsSelectionPage extends WizardPage {
 
 	private static final String WORKINGSET_SELECTION_HISTORY = "workingset_selection_history"; //$NON-NLS-1$
 	private static final int MAX_HISTORY_SIZE = 5;
-
-	private Button runInBackgroundCheckbox;
 	
 	private Label workingSetLabel;
 	private Combo workingSetCombo;
@@ -69,7 +67,7 @@ public class ProjectSetFileImportWorkingSetsSelectionPage extends WizardPage {
 	private ArrayList<String> workingSetSelectionHistory;
 	private String[] workingSetTypeIds;
 
-	public ProjectSetFileImportWorkingSetsSelectionPage() {
+	public PsfImportWizardWorkingSetsSelectionPage() {
 		super("projectSetFilesPage", "Import project sets", null);
 		setDescription("Configure the working sets to apply to the imported projects.");
 	}
@@ -123,16 +121,6 @@ public class ProjectSetFileImportWorkingSetsSelectionPage extends WizardPage {
 
 		createContent(workingSetGroup);
 
-		GridData gd1 = new GridData(SWT.FILL, SWT.CENTER, true, false);
-		gd1.widthHint = 0;
-		gd1.heightHint = SWT.DEFAULT;
-		gd1.horizontalSpan = 3;
-
-		runInBackgroundCheckbox = new Button(composite, SWT.CHECK);
-		runInBackgroundCheckbox.setText("Run the import in the bac&kground");
-		runInBackgroundCheckbox.setLayoutData(gd1);
-		runInBackgroundCheckbox.setSelection(isRunInBackgroundPreferenceOn());
-
 		setControl(composite);
 		Dialog.applyDialogFont(parent);
 	}
@@ -152,15 +140,6 @@ public class ProjectSetFileImportWorkingSetsSelectionPage extends WizardPage {
 			return selectedWorkingSets;
 		}
 		return EMPTY_WORKING_SET_ARRAY;
-	}
-
-	private static boolean isRunInBackgroundPreferenceOn() {
-		return PsfImportPlugin.getDefault().getPreferenceStore()
-				.getBoolean(IPreferenceIds.RUN_IN_BACKGROUND);
-	}
-
-	public boolean isRunInBackgroundOn() {
-		return runInBackgroundCheckbox.getSelection();
 	}
 
 	public boolean isAutomagicMode() {
