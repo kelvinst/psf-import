@@ -101,7 +101,6 @@ public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 		comboData1.verticalAlignment = GridData.CENTER;
 		comboData1.grabExcessVerticalSpace = false;
 		comboData1.widthHint = IDialogConstants.ENTRY_FIELD_WIDTH;
-		int widthHint = convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
 
 		Group workingSetGroup = new Group(composite, SWT.NONE);
 		workingSetGroup.setFont(composite.getFont());
@@ -166,14 +165,14 @@ public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 				workingSetIds.length);
 		Arrays.sort(workingSetIdsCopy);
 
-		ArrayList result = new ArrayList();
+		ArrayList<IWorkingSet> result = new ArrayList<IWorkingSet>();
 
 		for (int i = 0; i < workingSets.length; i++) {
 			if (Arrays.binarySearch(workingSetIdsCopy, workingSets[i].getId()) >= 0)
 				result.add(workingSets[i]);
 		}
 
-		return (IWorkingSet[]) result.toArray(new IWorkingSet[result.size()]);
+		return result.toArray(new IWorkingSet[result.size()]);
 	}
 
 	/**

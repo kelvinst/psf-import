@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: org.kelvinst.psfimport.ui
+Bundle-Name: psf-import
 Bundle-SymbolicName: org.kelvinst.psfimport.ui;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.kelvinst.psfimport.ui.PsfImportPlugin
