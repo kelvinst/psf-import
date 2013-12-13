@@ -15,13 +15,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.internal.WorkbenchImages;
 import org.eclipse.ui.internal.WorkbenchPlugin;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.kelvinst.psfimport.ui.providers.FileStructureProvider;
 
 /**
@@ -109,7 +106,7 @@ public class FileElement {
 		this.populated = true;
 	}
 
-    /**
+	/**
 	 * Creates a new <code>FileSystemElement</code> and initializes it and its
 	 * parent if applicable.
 	 * 
@@ -149,8 +146,8 @@ public class FileElement {
 			files.add(child);
 		}
 	}
-	
-    /**
+
+	/**
 	 * Returns the extension of this element's filename.
 	 * 
 	 * @return The extension or an empty string if there is no extension.
@@ -159,23 +156,20 @@ public class FileElement {
 		int lastDot = name.lastIndexOf('.');
 		return lastDot < 0 ? "" : name.substring(lastDot + 1); //$NON-NLS-1$
 	}
-	
+
 	/**
 	 * @return The name
 	 */
 	public String getName() {
 		return name;
 	}
-	
+
 	public ImageDescriptor getImageDescriptor() {
 		if (isDirectory()) {
-            return WorkbenchImages
-                    .getImageDescriptor(ISharedImages.IMG_OBJ_FOLDER);
-        } else {
-            return WorkbenchPlugin.getDefault().getEditorRegistry()
-                    .getImageDescriptor(name);
-			//TODO: what are the implications for content types?  Should I guess?
-        }
+			return WorkbenchImages.getImageDescriptor(ISharedImages.IMG_OBJ_FOLDER);
+		} else {
+			return WorkbenchPlugin.getDefault().getEditorRegistry().getImageDescriptor(name);
+		}
 	}
 
 	/**

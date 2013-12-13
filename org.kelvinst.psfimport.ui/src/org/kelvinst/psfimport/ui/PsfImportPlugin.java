@@ -1,12 +1,8 @@
 package org.kelvinst.psfimport.ui;
 
-import java.io.IOException;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
-import org.eclipse.ui.internal.ide.StatusUtil;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 

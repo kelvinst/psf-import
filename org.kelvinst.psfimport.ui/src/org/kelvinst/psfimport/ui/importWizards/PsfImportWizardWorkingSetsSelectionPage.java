@@ -47,10 +47,6 @@ import org.eclipse.ui.internal.dialogs.SimpleWorkingSetSelectionDialog;
 import org.kelvinst.psfimport.ui.PsfImportPlugin;
 
 public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
-	// a wizard shouldn't be in an error state until the state has been modified
-	// by the user
-	private int messageType = NONE;
-
 	private static final IWorkingSet[] EMPTY_WORKING_SET_ARRAY = new IWorkingSet[0];
 
 	private static final String WORKINGSET_SELECTION_HISTORY = "workingset_selection_history"; //$NON-NLS-1$
@@ -100,7 +96,6 @@ public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 		comboData1.verticalAlignment = GridData.CENTER;
 		comboData1.grabExcessVerticalSpace = false;
 		comboData1.widthHint = IDialogConstants.ENTRY_FIELD_WIDTH;
-		int widthHint = convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
 
 		Group workingSetGroup = new Group(composite, SWT.NONE);
 		workingSetGroup.setFont(composite.getFont());
@@ -116,7 +111,7 @@ public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 		// with these later - presort them
 		selectedWorkingSets = EMPTY_WORKING_SET_ARRAY;
 		workingSetSelectionHistory = loadSelectionHistory(workingSetTypeIds);
-		setSelectedWorkingSets(findApplicableWorkingSets(null));
+		setSelectedWorkingSets(EMPTY_WORKING_SET_ARRAY);
 
 		createContent(workingSetGroup);
 
@@ -165,30 +160,14 @@ public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 				workingSetIds.length);
 		Arrays.sort(workingSetIdsCopy);
 
-		ArrayList result = new ArrayList();
+		ArrayList<IWorkingSet> result = new ArrayList<IWorkingSet>();
 
 		for (int i = 0; i < workingSets.length; i++) {
 			if (Arrays.binarySearch(workingSetIdsCopy, workingSets[i].getId()) >= 0)
 				result.add(workingSets[i]);
 		}
 
-		return (IWorkingSet[]) result.toArray(new IWorkingSet[result.size()]);
-	}
-
-	/**
-	 * Set the current selection in the workbench.
-	 * 
-	 * @param selection
-	 *            the selection to present in the UI or <b>null</b>
-	 * @deprecated use {@link #setSelectedWorkingSets(IWorkingSet[])} and
-	 *             {@link #findApplicableWorkingSets(IStructuredSelection)}
-	 *             instead.
-	 */
-	public void setSelection(IStructuredSelection selection) {
-		selectedWorkingSets = findApplicableWorkingSets(selection);
-
-		if (workingSetCombo != null)
-			updateSelectedWorkingSets();
+		return result.toArray(new IWorkingSet[result.size()]);
 	}
 
 	/**
@@ -205,23 +184,6 @@ public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 	}
 
 	/**
-	 * Retrieves a working set from the given <code>selection</code> or an empty
-	 * array if no working set could be retrieved. This selection is filtered
-	 * based on the criteria used to construct this instance.
-	 * 
-	 * @param selection
-	 *            the selection to retrieve the working set from
-	 * @return the selected working set or an empty array
-	 */
-	public IWorkingSet[] findApplicableWorkingSets(
-			IStructuredSelection selection) {
-		if (selection == null)
-			return EMPTY_WORKING_SET_ARRAY;
-
-		return filterWorkingSets(selection.toList());
-	}
-
-	/**
 	 * Prune a list of working sets such that they all match the criteria set
 	 * out by this block.
 	 * 
@@ -229,16 +191,15 @@ public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 	 *            the elements to filter
 	 * @return the filtered elements
 	 */
-	private IWorkingSet[] filterWorkingSets(Collection elements) {
-		ArrayList result = new ArrayList();
-		for (Iterator iterator = elements.iterator(); iterator.hasNext();) {
-			Object element = iterator.next();
-			if (element instanceof IWorkingSet
-					&& verifyWorkingSet((IWorkingSet) element)) {
+	private IWorkingSet[] filterWorkingSets(Collection<IWorkingSet> elements) {
+		ArrayList<IWorkingSet> result = new ArrayList<IWorkingSet>();
+		for (Iterator<IWorkingSet> iterator = elements.iterator(); iterator.hasNext();) {
+			IWorkingSet element = iterator.next();
+			if (verifyWorkingSet(element)) {
 				result.add(element);
 			}
 		}
-		return (IWorkingSet[]) result.toArray(new IWorkingSet[result.size()]);
+		return result.toArray(new IWorkingSet[result.size()]);
 	}
 
 	/**
@@ -391,8 +352,9 @@ public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 	private String[] getHistoryEntries() {
 		String[] history = workingSetSelectionHistory
 				.toArray(new String[workingSetSelectionHistory.size()]);
-		Arrays.sort(history, new Comparator() {
-			public int compare(Object o1, Object o2) {
+		Arrays.sort(history, new Comparator<String>() {
+			@Override
+			public int compare(String o1, String o2) {
 				return Collator.getInstance().compare(o1, o2);
 			}
 		});
@@ -444,11 +406,11 @@ public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 	private void storeSelectionHistory() {
 		String[] history;
 		if (workingSetSelectionHistory.size() > MAX_HISTORY_SIZE) {
-			List subList = workingSetSelectionHistory.subList(0,
+			List<String> subList = workingSetSelectionHistory.subList(0,
 					MAX_HISTORY_SIZE);
-			history = (String[]) subList.toArray(new String[subList.size()]);
+			history = subList.toArray(new String[subList.size()]);
 		} else {
-			history = (String[]) workingSetSelectionHistory
+			history = workingSetSelectionHistory
 					.toArray(new String[workingSetSelectionHistory.size()]);
 		}
 		PsfImportPlugin.getDefault().getDialogSettings()

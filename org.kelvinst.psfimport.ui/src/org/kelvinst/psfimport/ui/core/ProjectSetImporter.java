@@ -41,10 +41,8 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.IProjectSetSerializer;
 import org.eclipse.team.core.ProjectSetCapability;
 import org.eclipse.team.core.RepositoryProviderType;
-import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.internal.core.TeamPlugin;
 import org.eclipse.team.internal.ui.TeamCapabilityHelper;
@@ -100,13 +98,9 @@ public class ProjectSetImporter {
 
 			List<IProject> newProjects = new ArrayList<IProject>();
 			if (version.equals("1.0")) { //$NON-NLS-1$
-				IProjectSetSerializer serializer = Team.getProjectSetSerializer("versionOneSerializer"); //$NON-NLS-1$
-				if (serializer != null) {
-					IProject[] projects = serializer.addToWorkspace(new String[0], filename, shell, monitor);
-					if (projects != null)
-						newProjects.addAll(Arrays.asList(projects));
-				}
+				throw new UnsupportedOperationException("This version of psf is unsupported with the import-psf plugin.");
 			} else {
+				// TODO Here we must change to use psf-def
 				UIProjectSetSerializationContext context = new UIProjectSetSerializationContext(shell, filename);
 				List<TeamException> errors = new ArrayList<TeamException>();
 				IMemento[] providers = xmlMemento.getChildren("provider"); //$NON-NLS-1$
@@ -281,11 +275,11 @@ public class ProjectSetImporter {
 		IAdaptable[] oldElements = oldWs.getElements();
 		IAdaptable[] newElements = newWs.getElements();
 
-		Set combinedElements = new HashSet();
+		Set<IAdaptable> combinedElements = new HashSet<IAdaptable>();
 		combinedElements.addAll(Arrays.asList(oldElements));
 		combinedElements.addAll(Arrays.asList(newElements));
 
-		oldWs.setElements((IAdaptable[]) combinedElements.toArray(new IAdaptable[0]));
+		oldWs.setElements(combinedElements.toArray(new IAdaptable[0]));
 	}
 
 	private static void replaceWorkingSet(IWorkingSetManager wsManager, IWorkingSet newWs, IWorkingSet oldWs) {
