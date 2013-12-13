@@ -84,7 +84,7 @@ import org.kelvinst.psfimport.ui.IFileElementFilter;
 /**
  * Page 1 of the base resource import-from-file-system Wizard
  */
-public class ProjectSetFileImportFilesSelectionPage extends WizardPage {
+public class PsfImportWizardFilesSelectionPage extends WizardPage {
 	// widgets
 	protected Combo sourceNameField;
 
@@ -953,7 +953,7 @@ public class ProjectSetFileImportFilesSelectionPage extends WizardPage {
 	 * @param selection
 	 *            IStructuredSelection
 	 */
-	public ProjectSetFileImportFilesSelectionPage(IStructuredSelection selection) {
+	public PsfImportWizardFilesSelectionPage(IStructuredSelection selection) {
 		super("fileSystemImportPage1");
 
 		// Initialize to null
