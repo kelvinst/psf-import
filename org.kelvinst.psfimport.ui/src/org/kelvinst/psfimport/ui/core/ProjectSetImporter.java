@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.kelvinst.psfimport.ui;
+package org.kelvinst.psfimport.ui.core;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -55,6 +55,7 @@ import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.XMLMemento;
+import org.kelvinst.psfimport.ui.PsfImportPlugin;
 
 public class ProjectSetImporter {
 

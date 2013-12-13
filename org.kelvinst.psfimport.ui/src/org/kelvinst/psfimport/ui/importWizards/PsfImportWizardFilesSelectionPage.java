@@ -21,9 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.ListenerList;
@@ -73,13 +71,13 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
-import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.model.WorkbenchViewerComparator;
-import org.kelvinst.psfimport.ui.FileContentProvider;
-import org.kelvinst.psfimport.ui.FileElement;
-import org.kelvinst.psfimport.ui.FileStructureProvider;
-import org.kelvinst.psfimport.ui.FolderContentProvider;
-import org.kelvinst.psfimport.ui.IFileElementFilter;
+import org.kelvinst.psfimport.ui.elements.FileElement;
+import org.kelvinst.psfimport.ui.elements.IFileElementFilter;
+import org.kelvinst.psfimport.ui.providers.FileContentProvider;
+import org.kelvinst.psfimport.ui.providers.FileElementLabelProvider;
+import org.kelvinst.psfimport.ui.providers.FileStructureProvider;
+import org.kelvinst.psfimport.ui.providers.FolderContentProvider;
 
 /**
  * Page 1 of the base resource import-from-file-system Wizard
@@ -99,8 +97,6 @@ public class PsfImportWizardFilesSelectionPage extends WizardPage {
 	private final static String STORE_SOURCE_NAMES_ID = "WizardFileSystemResourceImportPage1.STORE_SOURCE_NAMES_ID";//$NON-NLS-1$
 
 	protected static final int COMBO_HISTORY_LENGTH = 5;
-
-	private IResource currentResourceSelection;
 
 	/**
 	 * The <code>selectionGroup</code> field should have been created with a
@@ -122,9 +118,9 @@ public class PsfImportWizardFilesSelectionPage extends WizardPage {
 
 	private FileContentProvider filesContentProvider;
 
-	private ILabelProvider folderLabelProvider;
+	private FileElementLabelProvider folderLabelProvider;
 
-	private ILabelProvider filesLabelProvider;
+	private FileElementLabelProvider filesLabelProvider;
 
 	// widgets
 	private CheckboxTreeViewer treeViewer;
@@ -145,6 +141,19 @@ public class PsfImportWizardFilesSelectionPage extends WizardPage {
 	 * collection is <code>null</code> if there are no listeners.
 	 */
 	private transient ListenerList listenerList = null;
+
+	/**
+	 * Creates an instance of this class
+	 * 
+	 * @param selection
+	 *            IStructuredSelection
+	 */
+	public PsfImportWizardFilesSelectionPage() {
+		super("fileSystemImportPage1");
+
+		setTitle("Import project sets");
+		setDescription("Select the files to import.");
+	}
 
 	/**
 	 * Adds a listener to this manager that will be notified when this manager's
@@ -948,41 +957,6 @@ public class PsfImportWizardFilesSelectionPage extends WizardPage {
 	}
 
 	/**
-	 * Creates an instance of this class
-	 * 
-	 * @param selection
-	 *            IStructuredSelection
-	 */
-	public PsfImportWizardFilesSelectionPage(IStructuredSelection selection) {
-		super("fileSystemImportPage1");
-
-		// Initialize to null
-		currentResourceSelection = null;
-		if ((selection != null) && (selection.size() == 1)) {
-			Object firstElement = selection.getFirstElement();
-			if (firstElement instanceof IAdaptable) {
-				Object resource = ((IAdaptable) firstElement).getAdapter(IResource.class);
-				if (resource != null) {
-					currentResourceSelection = (IResource) resource;
-				}
-			}
-		}
-
-		if (currentResourceSelection != null) {
-			if (currentResourceSelection.getType() == IResource.FILE) {
-				currentResourceSelection = currentResourceSelection.getParent();
-			}
-
-			if (!currentResourceSelection.isAccessible()) {
-				currentResourceSelection = null;
-			}
-		}
-
-		setTitle("Import project sets");
-		setDescription("Select the files to import.");
-	}
-
-	/**
 	 * Adds an entry to a history, while taking care of duplicate history items
 	 * and excessively long histories. The assumption is made that all histories
 	 * should be of length
@@ -1224,8 +1198,8 @@ public class PsfImportWizardFilesSelectionPage extends WizardPage {
 		root = new FileElement("Dummy", null, true);
 		this.foldersContentProvider = new FolderContentProvider(fileStructureProvider);
 		this.filesContentProvider = new FileContentProvider(fileStructureProvider);
-		this.folderLabelProvider = new WorkbenchLabelProvider();
-		this.filesLabelProvider = new WorkbenchLabelProvider();
+		this.folderLabelProvider = new FileElementLabelProvider();
+		this.filesLabelProvider = new FileElementLabelProvider();
 
 		createContents(parent, SWT.NONE);
 

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.kelvinst.psfimport.ui;
+package org.kelvinst.psfimport.ui.elements;
 
 import java.util.Collection;
 

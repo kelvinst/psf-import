@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.kelvinst.psfimport.ui;
+package org.kelvinst.psfimport.ui.elements;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,6 +22,7 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.internal.WorkbenchImages;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.model.IWorkbenchAdapter;
+import org.kelvinst.psfimport.ui.providers.FileStructureProvider;
 
 /**
  * Instances of this class represent files or file-like entities (eg.- zip file
@@ -37,24 +38,13 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
  * This class is adaptable, and implements one adapter itself, namely the
  * IWorkbenchAdapter adapter used for navigation and display in the workbench.
  */
-public class FileElement implements IAdaptable {
-	private String name;
-
-	private File file;
-
-	/*
-	 * Wait until a child is added to initialize the receiver's lists. Doing so
-	 * minimizes the amount of memory that is allocated when a large directory
-	 * structure is being processed.
-	 */
+public class FileElement {
 	private List<FileElement> folders = null;
-
 	private List<FileElement> files = null;
-
 	private boolean isDirectory = false;
-
+	private String name;
+	private File file;
 	private FileElement parent;
-
 	private boolean populated = false;
 
 	/**
@@ -119,43 +109,6 @@ public class FileElement implements IAdaptable {
 		this.populated = true;
 	}
 
-	private IWorkbenchAdapter workbenchAdapter = new IWorkbenchAdapter() {
-        /**
-         * Answer the children property of this element
-         */
-        public Object[] getChildren(Object o) {
-            return getFolders().toArray();
-        }
-
-        /**
-         * Returns the parent of this element
-         */
-        public Object getParent(Object o) {
-            return parent;
-        }
-
-	/**
-         * Returns an appropriate label for this file system element.
-         */
-        public String getLabel(Object o) {
-            return name;
-        }
-
-        /**
-         * Returns an image descriptor for this file system element
-         */
-        public ImageDescriptor getImageDescriptor(Object object) {
-            if (isDirectory()) {
-                return WorkbenchImages
-                        .getImageDescriptor(ISharedImages.IMG_OBJ_FOLDER);
-            } else {
-                return WorkbenchPlugin.getDefault().getEditorRegistry()
-                        .getImageDescriptor(name);
-				//TODO: what are the implications for content types?  Should I guess?
-            }
-        }
-    };
-
     /**
 	 * Creates a new <code>FileSystemElement</code> and initializes it and its
 	 * parent if applicable.
@@ -197,17 +150,6 @@ public class FileElement implements IAdaptable {
 		}
 	}
 	
-	/**
-     * Returns the adapter
-     */
-    public Object getAdapter(Class adapter) {
-        if (adapter == IWorkbenchAdapter.class) {
-            return workbenchAdapter;
-        }
-        //defer to the platform
-        return Platform.getAdapterManager().getAdapter(this, adapter);
-    }
-
     /**
 	 * Returns the extension of this element's filename.
 	 * 
@@ -223,6 +165,17 @@ public class FileElement implements IAdaptable {
 	 */
 	public String getName() {
 		return name;
+	}
+	
+	public ImageDescriptor getImageDescriptor() {
+		if (isDirectory()) {
+            return WorkbenchImages
+                    .getImageDescriptor(ISharedImages.IMG_OBJ_FOLDER);
+        } else {
+            return WorkbenchPlugin.getDefault().getEditorRegistry()
+                    .getImageDescriptor(name);
+			//TODO: what are the implications for content types?  Should I guess?
+        }
 	}
 
 	/**

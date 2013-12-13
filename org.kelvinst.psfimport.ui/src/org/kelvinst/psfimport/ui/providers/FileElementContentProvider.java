@@ -1,6 +1,7 @@
-package org.kelvinst.psfimport.ui;
+package org.kelvinst.psfimport.ui.providers;
 
 import org.eclipse.ui.model.WorkbenchContentProvider;
+import org.kelvinst.psfimport.ui.elements.FileElement;
 
 public abstract class FileElementContentProvider extends WorkbenchContentProvider {
 	

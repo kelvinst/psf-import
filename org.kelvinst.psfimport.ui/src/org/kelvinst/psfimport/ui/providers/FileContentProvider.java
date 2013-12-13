@@ -1,6 +1,8 @@
-package org.kelvinst.psfimport.ui;
+package org.kelvinst.psfimport.ui.providers;
 
 import java.util.List;
+
+import org.kelvinst.psfimport.ui.elements.FileElement;
 
 public final class FileContentProvider extends FileElementContentProvider {
 	

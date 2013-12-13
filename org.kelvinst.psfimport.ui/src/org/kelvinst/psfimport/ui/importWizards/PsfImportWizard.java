@@ -17,13 +17,12 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.IWorkbench;
-import org.kelvinst.psfimport.ui.FileElement;
-import org.kelvinst.psfimport.ui.ImportProjectSetJob;
+import org.kelvinst.psfimport.ui.core.ImportProjectSetJob;
+import org.kelvinst.psfimport.ui.elements.FileElement;
 
 public class PsfImportWizard extends Wizard implements IImportWizard {
 	PsfImportWizardFilesSelectionPage filesPage;
 	PsfImportWizardWorkingSetsSelectionPage workingSetsPage;
-	private IStructuredSelection selection;
 
 	public PsfImportWizard() {
 		setNeedsProgressMonitor(true);
@@ -31,7 +30,7 @@ public class PsfImportWizard extends Wizard implements IImportWizard {
 	}
 
 	public void addPages() {
-		filesPage = new PsfImportWizardFilesSelectionPage(selection);
+		filesPage = new PsfImportWizardFilesSelectionPage();
 		addPage(filesPage);
 
 		workingSetsPage = new PsfImportWizardWorkingSetsSelectionPage();
@@ -51,7 +50,8 @@ public class PsfImportWizard extends Wizard implements IImportWizard {
 		return true;
 	}
 
+	@Override
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
-		this.selection = selection;
 	}
+
 }

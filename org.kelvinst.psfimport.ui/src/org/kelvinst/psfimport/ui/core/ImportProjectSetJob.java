@@ -1,4 +1,4 @@
-package org.kelvinst.psfimport.ui;
+package org.kelvinst.psfimport.ui.core;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -16,6 +16,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetManager;
+import org.kelvinst.psfimport.ui.PsfImportPlugin;
 import org.xml.sax.SAXException;
 
 public class ImportProjectSetJob extends Job {

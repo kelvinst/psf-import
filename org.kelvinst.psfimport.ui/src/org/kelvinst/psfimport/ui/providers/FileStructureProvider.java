@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.kelvinst.psfimport.ui;
+package org.kelvinst.psfimport.ui.providers;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.kelvinst.psfimport.ui.PsfImportPlugin;
 
 /**
  * This class provides information regarding the structure and
@@ -76,25 +78,6 @@ public class FileStructureProvider {
 		}
 		return false;
 	}
-
-	/* (non-Javadoc)
-     * Method declared on IImportStructureProvider
-     */
-    public InputStream getContents(File file) {
-        try {
-            return new FileInputStream(file);
-        } catch (FileNotFoundException e) {
-        	PsfImportPlugin.error(e.getLocalizedMessage(), e);
-            return null;
-        }
-    }
-
-    /* (non-Javadoc)
-     * Method declared on IImportStructureProvider
-     */
-    public String getFullPath(Object element) {
-        return ((File) element).getPath();
-    }
 
     /* (non-Javadoc)
      * Method declared on IImportStructureProvider

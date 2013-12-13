@@ -44,7 +44,6 @@ import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.dialogs.SimpleWorkingSetSelectionDialog;
-import org.kelvinst.psfimport.ui.IPreferenceIds;
 import org.kelvinst.psfimport.ui.PsfImportPlugin;
 
 public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
