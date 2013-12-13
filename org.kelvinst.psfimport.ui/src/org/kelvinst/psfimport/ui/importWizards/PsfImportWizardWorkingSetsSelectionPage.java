@@ -62,7 +62,7 @@ public class PsfImportWizardWorkingSetsSelectionPage extends WizardPage {
 	private Button workingSetSelectButton;
 	private Button workingSetEnableButton;
 	private Button workingSetAutomagicModeButton;
-	
+
 	private IWorkingSet[] selectedWorkingSets;
 	private ArrayList<String> workingSetSelectionHistory;
 	private String[] workingSetTypeIds;
